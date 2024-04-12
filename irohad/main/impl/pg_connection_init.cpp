@@ -255,6 +255,13 @@ CREATE TABLE top_block_info (
     height int,
     hash character varying(128)
 );
+
+CREATE TABLE test (
+    parts_id character varying(288),
+    emissions character varying(288) int NOT NULL,
+    PRIMARY KEY (parts_id)
+);
+
 CREATE TABLE role (
     role_id character varying(32),
     PRIMARY KEY (role_id)
