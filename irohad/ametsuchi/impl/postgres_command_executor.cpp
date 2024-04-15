@@ -185,8 +185,8 @@ namespace {
     return (boost::format("'%s'") % set.toBitstring()).str();
   }
 
-  std::string checkAccountRolePermission(
-      const std::string &permission_bitstring,
+  std::string checkAccountRolePermission( /* #1 */
+      const std::string &permission_bitstring, 
       const shared_model::interface::types::AccountIdType &account_id) {
     std::string query = (boost::format(R"(
           SELECT
@@ -202,7 +202,7 @@ namespace {
     return query;
   }
 
-  std::string checkAccountRolePermission(
+  std::string checkAccountRolePermission( /* #2 */
       const std::string &permission_bitstring,
       const std::string &additional_permission_bitstring,
       const shared_model::interface::types::AccountIdType &account_id) {
@@ -1166,20 +1166,27 @@ namespace iroha {
           WITH %s
             inserted AS
             (
-                UPDATE account SET data = jsonb_set(
-                CASE WHEN data ? :creator THEN data ELSE
-                jsonb_set(data, array[:creator], '{}') END,
-                array[:creator, :key], :value::jsonb) WHERE account_id=:target %s
+                UPDATE account SET data = 
+                jsonb_set(
+                  CASE WHEN data ? :creator THEN data 
+                  ELSE jsonb_set(data, array[:creator], '{}') 
+                  END,
+                  array[:creator, :key], 
+                "set value"::jsonb
+                )
+                WHERE account_id=:target
                 RETURNING (1)
             )
           SELECT CASE
             WHEN EXISTS (SELECT * FROM inserted) THEN 0
             WHEN NOT EXISTS
-                    (SELECT * FROM account WHERE account_id=:target) THEN 3
+                    (SELECT * FROM account WHERE account_id=:target) THEN 3 
             %s
             ELSE 1
           END AS result)",
-          {(boost::format(R"(
+          /*boost::format → 書式文字列の設定で引数を%で繋ぐ*/
+          /*boost::formatは上の1つ目の%s*/
+          {(boost::format(R"( 
               has_role_perm AS (%s),
               has_grantable_perm AS (%s),
               has_perm AS (SELECT CASE
@@ -1189,12 +1196,12 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-            % checkAccountRolePermission(Role::kSetDetail, ":creator")
-            % checkAccountGrantablePermission(
-                  Grantable::kSetMyAccountDetail, ":creator", ":target"))
+            % checkAccountRolePermission(Role::kSetDetail, ":creator")　/*boost::formatの文字列1　has_role_permの%s*/ /* #1 */
+            % checkAccountGrantablePermission( 
+                  Grantable::kSetMyAccountDetail, ":creator", ":target")) /*boost::formatの文字列2　has_grantable_permの%s*/
                .str(),
-           R"( AND (SELECT * FROM has_perm))",
-           R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"});
+           R"( AND (SELECT * FROM has_perm))",　/*上の2つ目の%s permissionがtrueなら*/
+           R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}); /*上の3つ目の%s*/
 
       remove_sync_peer_statements_ = makeCommandStatements(
           sql_,
