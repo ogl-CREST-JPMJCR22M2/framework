@@ -1167,7 +1167,7 @@ namespace iroha {
             inserted AS
             (
                 UPDATE test SET data = :value
-                WHERE parts_id=:target and parts_id=:key
+                WHERE parts_id=:target and parts_id=:key %s
                 RETURNING (1)
             )
           SELECT CASE
