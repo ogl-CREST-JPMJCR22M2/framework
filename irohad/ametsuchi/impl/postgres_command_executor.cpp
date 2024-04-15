@@ -1166,15 +1166,8 @@ namespace iroha {
           WITH %s
             inserted AS
             (
-                UPDATE account SET data = 
-                jsonb_set(
-                  CASE WHEN data ? :creator THEN data 
-                  ELSE jsonb_set(data, array[:creator], '{}') 
-                  END,
-                  array[:creator, :key], 
-                "set value":value::jsonb
-                )
-                WHERE account_id=:target
+                UPDATE test SET data = :value
+                WHERE parts_id=:target and parts_id=:key
                 RETURNING (1)
             )
           SELECT CASE
