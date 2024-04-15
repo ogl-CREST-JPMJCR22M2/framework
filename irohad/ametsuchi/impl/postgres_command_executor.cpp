@@ -1172,7 +1172,7 @@ namespace iroha {
                   ELSE jsonb_set(data, array[:creator], '{}') 
                   END,
                   array[:creator, :key], 
-                "set value"::jsonb
+                "set value":value::jsonb
                 )
                 WHERE account_id=:target
                 RETURNING (1)
@@ -1196,7 +1196,7 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-            % checkAccountRolePermission(Role::kSetDetail, ":creator") /*boost::formatの文字列1　has_role_permの%s*/ /* #1 */
+            % checkAccountRolePermission(Role::kSetDetail, ":creator") /*boost::formatの文字列1　has_rol CDe_permの%s*/ /* #1 */
             % checkAccountGrantablePermission( 
                   Grantable::kSetMyAccountDetail, ":creator", ":target")) /*boost::formatの文字列2　has_grantable_permの%s*/
                .str(),
