@@ -1200,7 +1200,7 @@ namespace iroha {
             % checkAccountGrantablePermission( 
                   Grantable::kSetMyAccountDetail, ":creator", ":target")) 
                .str(),
-           R"( AND (SELECT * FROM has_perm))",　/*上の2つ目の%s permissionがtrueなら*/
+           R"( AND (SELECT * FROM has_perm))",　
            R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}); /*上の3つ目の%s*/
 
       remove_sync_peer_statements_ = makeCommandStatements(
