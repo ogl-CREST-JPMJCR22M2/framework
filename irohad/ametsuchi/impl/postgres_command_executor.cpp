@@ -1196,11 +1196,11 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-            % checkAccountRolePermission(Role::kSetDetail, ":creator")　
+            % checkAccountRolePermission(Role::kSetDetail, ":creator") /*boost::formatの文字列1　has_role_permの%s*/ /* #1 */
             % checkAccountGrantablePermission( 
-                  Grantable::kSetMyAccountDetail, ":creator", ":target")) 
+                  Grantable::kSetMyAccountDetail, ":creator", ":target")) /*boost::formatの文字列2　has_grantable_permの%s*/
                .str(),
-           R"( AND (SELECT * FROM has_perm))",　
+           R"( AND (SELECT * FROM has_perm))", /*上の2つ目の%s permissionがtrueなら*/
            R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}); /*上の3つ目の%s*/
 
       remove_sync_peer_statements_ = makeCommandStatements(
