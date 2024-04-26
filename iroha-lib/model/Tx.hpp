@@ -77,8 +77,9 @@ public:
             const iroha::protocol::GrantablePermission permission);
     Tx& setAccountDetail(
             const std::string& account_id,
-            const std::string& key,
-            const std::string& value);
+            const std::string& part_id,
+            const std::string& new_emissions,
+            const std::string& sum_child_emissions);
     Tx& setAccountQuorum(
             const std::string& account_id,
             uint32_t quorum);

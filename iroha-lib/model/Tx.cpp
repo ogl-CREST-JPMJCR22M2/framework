@@ -169,13 +169,15 @@ Tx& Tx::revokePermission(
 
 Tx& Tx::setAccountDetail(
         const std::string& account_id,
-        const std::string& key,
-        const std::string& value)
+        const std::string& part_id,
+        const std::string& new_emissions,
+        const std::string& sum_child_emissions
 {
     auto cmd = cmd_generator_.generateSetAccountDetail(
                 account_id,
-                key,
-                value);
+                part_id,
+                new_emissions,
+                sum_child_emissions);
     addCommand(*cmd);
     return *this;
 }
