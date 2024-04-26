@@ -73,9 +73,10 @@ var (
 		native.Function{
 			Comment: `
 				* @notice Sets account detail
-				* @param Account account id to be used
-				* @param Key key for the added info
-				* @param Value value of added info
+				* @param Account 
+				* @param PartsID
+				* @param NewEmissions
+				* @param SunChildEmissions
 				* @return 'true' if successful, 'false' otherwise
 				`,
 			PermFlag: permission.Call,
@@ -439,24 +440,25 @@ func subtractAssetQuantity(ctx native.Context, args subtractAssetQuantityArgs) (
 
 type setAccountDetailArgs struct {
 	Account string
-	Key     string
-	Value   string
-}
+	Id     string
+	Emissions   string
+	ChildEmissions string
 
 type setAccountDetailRets struct {
 	Result bool
 }
 
 func setAccountDetail(ctx native.Context, args setAccountDetailArgs) (setAccountDetailRets, error) {
-	err := iroha.SetAccountDetail(args.Account, args.Key, args.Value)
+	err := iroha.SetAccountDetail(args.Account, args.Id, args.Emissions, args.ChildEmissions)
 	if err != nil {
 		return setAccountDetailRets{Result: false}, err
 	}
 
 	ctx.Logger.Trace.Log("function", "setAccountDetail",
 		"account", args.Account,
-		"key", args.Key,
-		"value", args.Value)
+		"id", args.Id,
+		"emissions", args.Emissions,
+		"childemissions", args.ChildEmissions)
 
 	return setAccountDetailRets{Result: true}, nil
 }

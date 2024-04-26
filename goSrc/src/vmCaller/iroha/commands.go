@@ -72,12 +72,13 @@ func SubtractAssetQuantity(asset string, amount string) error {
 	return handleErrors(commandResult, err, "SubtractAssetQuantity")
 }
 
-func SetAccountDetail(account string, key string, value string) error {
+func SetAccountDetail(account string, id string, emissions string, childemissions string) error {
 	command := &pb.Command{Command: &pb.Command_SetAccountDetail{
 		SetAccountDetail: &pb.SetAccountDetail{
 			AccountId: account,
-			Key:       key,
-			Value:     value,
+			PartsId:       id,
+			NewEmissions:     emissions,
+			SumChildEmissions:     childemissions,
 		}}}
 	commandResult, err := makeProtobufCmdAndExecute(IrohaCommandExecutor, command)
 	return handleErrors(commandResult, err, "SetAccountDetail")
