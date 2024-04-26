@@ -204,13 +204,15 @@ std::shared_ptr<Command> CommandGenerator::generateRevokePermission(
 
 std::shared_ptr<Command> CommandGenerator::generateSetAccountDetail(
         const std::string& account_id,
-        const std::string& key,
-        const std::string& value)
+        const std::string& part_id,
+        const std::string& new_emissions,
+        const std::string& sum_child_emissions)
 {
     SetAccountDetail accountDetails;
     accountDetails.set_account_id(account_id);
-    accountDetails.set_key(key);
-    accountDetails.set_value(value);
+    accountDetails.set_part_id(part_id);
+    accountDetails.set_new_emissions(new_emissions);
+    accountDetails.set_sum_child_emissions(sum_child_emissions);
 
     auto cmd = Command();
     cmd.set_allocated_set_account_detail(new SetAccountDetail(accountDetails));
