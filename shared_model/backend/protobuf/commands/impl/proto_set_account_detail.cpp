@@ -15,14 +15,19 @@ namespace shared_model {
       return set_account_detail_.account_id();
     }
 
-    const interface::types::AccountDetailKeyType &SetAccountDetail::key()
+    const interface::types::AccountDetailKeyType &SetAccountDetail::partsId()
         const {
-      return set_account_detail_.key();
+      return set_account_detail_.partsId();
     }
 
-    const interface::types::AccountDetailValueType &SetAccountDetail::value()
+    const interface::types::AccountDetailValueType &SetAccountDetail::newEmissions()
         const {
-      return set_account_detail_.value();
+      return set_account_detail_.newEmissions();
+    }
+
+    const interface::types::AccountDetailValueType &SetAccountDetail::sumChildEmissions()
+        const {
+      return set_account_detail_.sumChildEmissions();
     }
 
   }  // namespace proto

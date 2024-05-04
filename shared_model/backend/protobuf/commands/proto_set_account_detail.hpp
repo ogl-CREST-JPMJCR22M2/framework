@@ -18,9 +18,11 @@ namespace shared_model {
 
       const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::AccountDetailKeyType &key() const override;
+      const interface::types::AccountDetailKeyType &partsId() const override;
 
-      const interface::types::AccountDetailValueType &value() const override;
+      const interface::types::AccountDetailValueType &newEmissions() const override;
+
+      const interface::types::AccountDetailValueType &sumChildEmissions() const override;
 
      private:
       const iroha::protocol::SetAccountDetail &set_account_detail_;
