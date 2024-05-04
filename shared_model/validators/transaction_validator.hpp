@@ -195,9 +195,11 @@ namespace shared_model {
             "SetAccountDetail",
             {},
             {validator_.validateAccountId(set_account_detail.accountId()),
-             validator_.validateAccountDetailKey(set_account_detail.key()),
-             validator_.validateAccountDetailValue(
-                 set_account_detail.value())});
+             validator_.validateAccountDetailKey(set_account_detail.partsId()),
+             validator_.validateAccountDetailValue(set_account_detail.newEmissions()),
+             validator_.validateAccountDetailValue(set_account_detail.sumChildEmissions())
+             }
+        );
       }
 
       std::optional<ValidationError> operator()(
