@@ -12,14 +12,17 @@ namespace shared_model {
       return detail::PrettyStringBuilder()
           .init("SetAccountDetail")
           .appendNamed("account_id", accountId())
-          .appendNamed("key", key())
-          .appendNamed("value", value())
+          .appendNamed("parts_id", partsId())
+          .appendNamed("new_emissions", newEmissions())
+          .appendNamed("sum_child_emissions", sumChildEmissions())
           .finalize();
     }
 
     bool SetAccountDetail::operator==(const ModelType &rhs) const {
-      return accountId() == rhs.accountId() and key() == rhs.key()
-          and value() == rhs.value();
+      return accountId() == rhs.accountId() 
+          and partsId() == rhs.partsId()
+          and newEmissions() == rhs.newEmissions()
+          and sumChildEmissions() == rhs.sumChildEmissions();
     }
 
   }  // namespace interface
