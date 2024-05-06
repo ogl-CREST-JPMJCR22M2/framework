@@ -1167,7 +1167,7 @@ namespace iroha {
             inserted AS
             (
                 UPDATE test SET emissions = :value
-                WHERE parts_id=:key %s
+                WHERE parts_id=:partsid %s
                 RETURNING (1)
             )
           SELECT CASE
@@ -1920,9 +1920,10 @@ namespace iroha {
         shared_model::interface::types::CommandIndexType cmd_index,
         bool do_validation) {
       auto &account_id = command.accountId();
-      auto &key = command.key();
-      auto &value = command.value();
-      std::string json_value = makeJsonString(value);
+      auto &parts_id = command.partsId();
+      auto &new_emissions = command.newEmissions();
+      auto &sum_child_emissions = command.sumChildEmissions();
+      std::string value = new_emissions + sum_child_emissions;
 
       StatementExecutor executor(set_account_detail_statements_,
                                  do_validation,
@@ -1936,8 +1937,8 @@ namespace iroha {
         executor.use("creator", genesis_creator_account_id);
       }
       executor.use("target", account_id);
-      executor.use("key", key);
-      executor.use("value", json_value);
+      executor.use("partsid", parts_id);
+      executor.use("value", value);
 
       return executor.execute();
     }
