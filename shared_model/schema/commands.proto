@@ -43,8 +43,9 @@ message CreateAccount {
 
 message SetAccountDetail{
     string account_id = 1;
-    string key = 2;
-    string value = 3;
+    string parts_id = 2;
+    string new_emissions = 3;
+    string sum_child_emissions = 4;
 }
 
 message CreateDomain {
