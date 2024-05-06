@@ -218,10 +218,10 @@ namespace iroha {
 
         document.SetObject();
         document.AddMember("command_type", "SetAccountDetail", allocator);
-        document.AddMember(
-            "account_id", set_account_detail->account_id, allocator);
-        document.AddMember("key", set_account_detail->key, allocator);
-        document.AddMember("value", set_account_detail->value, allocator);
+        document.AddMember("account_id", set_account_detail->account_id, allocator);
+        document.AddMember("parts_id", set_account_detail->parts_id, allocator);
+        document.AddMember("new_emissions", set_account_detail->new_emissions, allocator);
+        document.AddMember("sum_child_emissions", set_account_detail->sum_child_emissions, allocator);
 
         return document;
       }
@@ -231,8 +231,9 @@ namespace iroha {
         auto des = makeFieldDeserializer(document);
         return make_optional_ptr<SetAccountDetail>()
             | des.String(&SetAccountDetail::account_id, "account_id")
-            | des.String(&SetAccountDetail::key, "key")
-            | des.String(&SetAccountDetail::value, "value") | toCommand;
+            | des.String(&SetAccountDetail::parts_id, "parts_id")
+            | des.String(&SetAccountDetail::new_emissions, "new_emissions")
+            | des.String(&SetAccountDetail::sum_child_emissions, "sum_child_emissions") | toCommand;
       }
 
       // CreateAsset

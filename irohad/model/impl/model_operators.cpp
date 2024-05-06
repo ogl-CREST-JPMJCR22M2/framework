@@ -138,7 +138,9 @@ namespace iroha {
       }
       auto setAccountDetail = static_cast<const SetAccountDetail &>(rhs);
       return setAccountDetail.account_id == account_id
-          and setAccountDetail.key == key and setAccountDetail.value == value;
+          and setAccountDetail.parts_id == parts_id 
+          and setAccountDetail.new_emissions == new_emissions 
+          and setAccountDetail.sum_child_emissions == sum_child_emissions;
     }
 
     /* CreateAsset */

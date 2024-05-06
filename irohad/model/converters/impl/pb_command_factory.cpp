@@ -451,8 +451,9 @@ namespace iroha {
           const model::SetAccountDetail &command) {
         protocol::SetAccountDetail cmd;
         cmd.set_account_id(command.account_id);
-        cmd.set_key(command.key);
-        cmd.set_value(command.value);
+        cmd.set_parts_id(command.parts_id);
+        cmd.set_new_emissions(command.new_emissions);
+        cmd.set_sum_child_emissions(command.sum_child_emissions);
         return cmd;
       }
 
@@ -460,8 +461,9 @@ namespace iroha {
           const protocol::SetAccountDetail &command) {
         model::SetAccountDetail setAccountDetail;
         setAccountDetail.account_id = command.account_id();
-        setAccountDetail.key = command.key();
-        setAccountDetail.value = command.value();
+        setAccountDetail.parts_id = command.parts_id();
+        setAccountDetail.new_emissions = command.new_emissions();
+        setAccountDetail.sum_child_emissions = command.sum_child_emissions();
         return setAccountDetail;
       }
 
