@@ -19,9 +19,14 @@ namespace shared_model {
     class SetAccountDetail : public ModelPrimitive<SetAccountDetail> {
      public:
       /**
-       * @return parts_id
+       * @return Identity of user to set account detail
        */
-      virtual const types::SettingKeyType &partsId() const = 0;
+      virtual const types::AccountIdType &accountId() const = 0;
+
+      /**
+       * @return key of data to store in the account
+       */
+      virtual const types::AccountDetailKeyType &partsId() const = 0;
 
       /**
        * @return new emissions
