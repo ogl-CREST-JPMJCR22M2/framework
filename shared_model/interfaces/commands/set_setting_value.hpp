@@ -19,19 +19,14 @@ namespace shared_model {
     class SetSettingValue : public ModelPrimitive<SetSettingValue> {
      public:
       /**
-       * @return parts_id
+       * @return key of data to store in settings
        */
-      virtual const types::SettingKeyType &partsId() const = 0;
+      virtual const types::SettingKeyType &key() const = 0;
 
       /**
-       * @return new emissions
+       * @return setting value to store by given key
        */
-      virtual const types::SettingValueType &newEmissions() const = 0;
-      
-      /**
-       * @return sum child emissions
-       */
-      virtual const types::SettingValueType &sumChildEmissions() const = 0;
+      virtual const types::SettingValueType &value() const = 0;
 
       std::string toString() const override;
 

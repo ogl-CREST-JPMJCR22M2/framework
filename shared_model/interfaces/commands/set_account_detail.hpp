@@ -19,19 +19,19 @@ namespace shared_model {
     class SetAccountDetail : public ModelPrimitive<SetAccountDetail> {
      public:
       /**
-       * @return Identity of user to set account detail
+       * @return parts_id
        */
-      virtual const types::AccountIdType &accountId() const = 0;
+      virtual const types::SettingKeyType &partsId() const = 0;
 
       /**
-       * @return key of data to store in the account
+       * @return new emissions
        */
-      virtual const types::AccountDetailKeyType &key() const = 0;
-
+      virtual const types::SettingValueType &newEmissions() const = 0;
+      
       /**
-       * @return detail value to store by given key
+       * @return sum child emissions
        */
-      virtual const types::AccountDetailValueType &value() const = 0;
+      virtual const types::SettingValueType &sumChildEmissions() const = 0;
 
       std::string toString() const override;
 
