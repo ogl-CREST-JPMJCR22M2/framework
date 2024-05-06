@@ -933,7 +933,7 @@ RocksDbCommandExecutor::ExecutionResult RocksDbCommandExecutor::operator()(
         common, account_name, domain_id));
   }
 
-  RDB_TRY_GET_VALUE(
+  /*RDB_TRY_GET_VALUE(
       opt_detail,
       forAccountDetail<kDbOperation::kGet, kDbEntry::kCanExist>(
           common,
@@ -961,7 +961,7 @@ RocksDbCommandExecutor::ExecutionResult RocksDbCommandExecutor::operator()(
     common.encode(count + 1ull);
     RDB_ERROR_CHECK(forAccountDetailsCount<kDbOperation::kPut>(
         common, account_name, domain_id));
-  }
+  }*/
 
   return {};
 }
