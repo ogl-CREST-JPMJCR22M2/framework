@@ -17,17 +17,17 @@ namespace shared_model {
 
     const interface::types::AccountDetailKeyType &SetAccountDetail::partsId()
         const {
-      return set_account_detail_.partsId();
+      return set_account_detail_.parts_id();
     }
 
     const interface::types::AccountDetailValueType &SetAccountDetail::newEmissions()
         const {
-      return set_account_detail_.newEmissions();
+      return set_account_detail_.new_emissions();
     }
 
     const interface::types::AccountDetailValueType &SetAccountDetail::sumChildEmissions()
         const {
-      return set_account_detail_.sumChildEmissions();
+      return set_account_detail_.sum_child_emissions();
     }
 
   }  // namespace proto
