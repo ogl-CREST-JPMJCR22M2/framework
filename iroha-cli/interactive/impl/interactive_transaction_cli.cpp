@@ -425,9 +425,10 @@ namespace iroha_cli {
     InteractiveTransactionCli::parseSetAccountDetail(
         std::vector<std::string> params) {
       auto account_id = params[0];
-      auto key = params[1];
-      auto value = params[2];
-      return std::make_shared<SetAccountDetail>(account_id, key, value);
+      auto parts_id = params[1];
+      auto new_emissions = params[2];
+      auto sum_child_emissions = params[3];
+      return std::make_shared<SetAccountDetail>(account_id, parts_id, new_emissions, sum_child_emissions);
     }
 
     // --------- Result parsers -------------

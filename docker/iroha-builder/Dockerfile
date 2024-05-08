@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # number of concurrent threads during build
 # usage: docker build --build-arg PARALLELISM=8 -t name/name .

@@ -4,7 +4,7 @@
   "internal_port" : 10001,
   "database": {
     "type": "postgres",
-    "host": "192.168.32.3",
+    "host": "localhost",
     "port": 5432,
     "user": "postgres",
     "password": "mysecretpassword",
