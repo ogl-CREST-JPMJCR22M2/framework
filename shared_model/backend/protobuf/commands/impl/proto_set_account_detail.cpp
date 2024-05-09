@@ -10,8 +10,8 @@ namespace shared_model {
 
     SetAccountDetail::SetAccountDetail(iroha::protocol::Command &command)
         : set_account_detail_{command.set_account_detail()},
-          newemissions_{set_account_detail_.emissions()},
-          sumchildemissions_{set_account_detail_.emissions()} {}
+          newemissions_{set_account_detail_.newEmissions()},
+          sumchildemissions_{set_account_detail_.sumChildEmissions()} {}
 
     const interface::types::AccountIdType &SetAccountDetail::accountId() const {
       return set_account_detail_.account_id();
