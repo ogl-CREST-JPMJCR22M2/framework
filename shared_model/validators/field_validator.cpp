@@ -17,6 +17,7 @@
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/amount.hpp"
+#include "interfaces/common_objects/emissions.hpp"
 #include "interfaces/common_objects/asset.hpp"
 #include "interfaces/common_objects/domain.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -183,6 +184,15 @@ namespace shared_model {
       return std::nullopt;
     }
 
+    std::optional<ValidationError> FieldValidator::validateEmissions(
+        const interface::Emissions &emissions) const {
+      if (emissions.sign() <= 0) {
+        return ValidationError(
+            "Emissions", {"Invalid number, emissions must be greater than 0"});
+      }
+      return std::nullopt;
+    }
+
     std::optional<ValidationError> FieldValidator::validatePubkey(
         std::string_view pubkey) const {
       return shared_model::validation::validatePubkey(pubkey);
@@ -224,6 +234,11 @@ namespace shared_model {
     std::optional<ValidationError> FieldValidator::validateAccountDetailKey(
         const interface::types::AccountDetailKeyType &key) const {
       return kAccountDetailKeyValidator.validate(key);
+    }
+
+    std::optional<ValidationError> FieldValidator::validatePartsIdType(
+        const interface::types::PartsIdType &parts_id) const {
+      return kAccountDetailKeyValidator.validate(parts_id);
     }
 
     std::optional<ValidationError> FieldValidator::validateAccountDetailValue(
