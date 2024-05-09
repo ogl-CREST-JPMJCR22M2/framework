@@ -26,12 +26,12 @@ namespace shared_model {
       /**
        * @return key of data to store in the account
        */
-      virtual const types::AccountDetailKeyType &partsId() const = 0;
+      virtual const types::PartsIdType &partsId() const = 0;
 
       /**
        * @return new emissions
        */
-      virtual const types::SettingValueType &newEmissions() const = 0;
+      virtual const types::EmissionsType &newEmissions() const = 0;
       
       /**
        * @return sum child emissions
