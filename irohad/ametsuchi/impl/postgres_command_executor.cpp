@@ -1921,8 +1921,8 @@ namespace iroha {
         bool do_validation) {
       auto &account_id = command.accountId();
       auto &parts_id = command.partsId();
-      auto &new_emissions = command.newEmissions();
-      auto &sum_child_emissions = command.sumChildEmissions();
+      auto new_emissions = command.newEmissions().toStringRepr();
+      auto sum_child_emissions = command.sumChildEmissions().toStringRepr();
       std::string value = new_emissions + sum_child_emissions;
 
       StatementExecutor executor(set_account_detail_statements_,

@@ -9,6 +9,7 @@
 #include "interfaces/commands/set_account_detail.hpp"
 
 #include "commands.pb.h"
+#include "interfaces/common_objects/emissions.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -18,14 +19,17 @@ namespace shared_model {
 
       const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::AccountDetailKeyType &partsId() const override;
+      const interface::types::PartsIdType &partsId() const override;
 
-      const interface::types::AccountDetailValueType &newEmissions() const override;
+      const interface::Emissions &newEmissions() const override;
 
-      const interface::types::AccountDetailValueType &sumChildEmissions() const override;
+      const interface::Emissions &sumChildEmissions() const override;
 
      private:
       const iroha::protocol::SetAccountDetail &set_account_detail_;
+
+      const interface::Emissions newemissions_;
+      const interface::Emissions sumchildemissions_;
     };
 
   }  // namespace proto

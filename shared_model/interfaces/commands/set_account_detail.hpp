@@ -8,6 +8,7 @@
 
 #include "interfaces/base/model_primitive.hpp"
 
+#include "interfaces/common_objects/emissions.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -26,17 +27,17 @@ namespace shared_model {
       /**
        * @return key of data to store in the account
        */
-      virtual const types::AccountDetailKeyType &partsId() const = 0;
+      virtual const types::PartsIdType &partsId() const = 0;
 
       /**
        * @return new emissions
        */
-      virtual const types::SettingValueType &newEmissions() const = 0;
+      virtual const Emissions &newEmissions() const = 0;
       
       /**
        * @return sum child emissions
        */
-      virtual const types::SettingValueType &sumChildEmissions() const = 0;
+      virtual const Emissions &sumChildEmissions() const = 0;
 
       std::string toString() const override;
 
