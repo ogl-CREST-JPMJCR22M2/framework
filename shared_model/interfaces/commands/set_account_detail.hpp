@@ -8,6 +8,7 @@
 
 #include "interfaces/base/model_primitive.hpp"
 
+#include "interfaces/common_objects/emissions.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -31,12 +32,12 @@ namespace shared_model {
       /**
        * @return new emissions
        */
-      virtual const types::EmissionsType &newEmissions() const = 0;
+      virtual const Emissions &newEmissions() const = 0;
       
       /**
        * @return sum child emissions
        */
-      virtual const types::SettingValueType &sumChildEmissions() const = 0;
+      virtual const Emissions &sumChildEmissions() const = 0;
 
       std::string toString() const override;
 
