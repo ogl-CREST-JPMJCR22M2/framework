@@ -1166,7 +1166,7 @@ namespace iroha {
           WITH %s
             inserted AS
             (
-                UPDATE test SET emissions = :value
+                UPDATE test SET emissions = :new_emissions::decimal
                 WHERE parts_id=:partsid %s
                 RETURNING (1)
             )
@@ -1923,7 +1923,7 @@ namespace iroha {
       auto &parts_id = command.partsId();
       auto new_emissions = command.newEmissions().toStringRepr();
       auto sum_child_emissions = command.sumChildEmissions().toStringRepr();
-      std::string value = new_emissions + sum_child_emissions;
+      //std::string value = new_emissions + sum_child_emissions;
 
       StatementExecutor executor(set_account_detail_statements_,
                                  do_validation,
@@ -1938,7 +1938,7 @@ namespace iroha {
       }
       executor.use("target", account_id);
       executor.use("partsid", parts_id);
-      executor.use("value", value);
+      executor.use("new_emissions", new_emissions);
 
       return executor.execute();
     }

@@ -258,7 +258,7 @@ CREATE TABLE top_block_info (
 
 CREATE TABLE test (
     parts_id character varying(288),
-    emissions character varying(288) NOT NULL ,
+    emissions decimal NOT NULL ,
     PRIMARY KEY (parts_id)
 );
 
