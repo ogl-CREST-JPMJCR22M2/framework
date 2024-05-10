@@ -262,6 +262,12 @@ CREATE TABLE test (
     PRIMARY KEY (parts_id)
 );
 
+INSERT INTO test VALUES
+	('e01001', '0.0'), 
+	('e01002', '0.0'),
+	('w02001', '0.0'),
+	('w03001', '0.0');
+
 CREATE TABLE role (
     role_id character varying(32),
     PRIMARY KEY (role_id)

@@ -1164,10 +1164,50 @@ namespace iroha {
           sql_,
           R"(
           WITH %s
-            inserted AS
+            new_quantity AS
+             (
+                 SELECT :new_emissions::decimal as newEmissions, 
+			:sum_child_emissions::decimal as sumChildEmissions,
+			:new_emissions::decimal + :sum_child_emissions::decimal as value
+                 FROM test
+                 WHERE parts_id=:partsid 
+             ),
+            checks AS -- error code and check result
             (
-                UPDATE test SET emissions = (:new_emissions::decimal + :sum_child_emissions::decimal)
-                WHERE parts_id=:partsid %s
+                -- source account exists
+                SELECT 3 code, count(1) = 1 result
+                FROM test
+                WHERE parts_id = :partsid
+
+                -- check value of new_emissions
+                UNION
+                SELECT 4, newEmissions >= 0
+                FROM new_quantity
+
+		-- check value of new_emissions
+                UNION
+                SELECT 5, newEmissions < 1000
+                FROM new_quantity
+		
+		-- check value of sum_child_emissions
+                UNION
+                SELECT 6, sumChildEmissions >= 0
+                FROM new_quantity
+
+                -- dest value overflow
+                UNION
+                SELECT 7, value < (2::decimal ^ 256) / (10::decimal ^ 10)
+                FROM new_quantity
+
+            ),
+	    inserted AS
+            (
+                UPDATE test SET emissions = (
+                	SELECT value FROM new_quantity
+			WHERE parts_id=:partsid
+			AND (SELECT bool_and(checks.result) FROM checks)
+		)
+		WHERE parts_id=:partsid %s
                 RETURNING (1)
             )
           SELECT CASE
