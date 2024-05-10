@@ -1211,30 +1211,17 @@ namespace iroha {
                 RETURNING (1)
             )
           SELECT CASE
-            WHEN EXISTS (SELECT * FROM inserted) THEN 0
-            WHEN NOT EXISTS
-                    (SELECT * FROM account WHERE account_id=:target) THEN 3 
-            %s
-            ELSE 1
+	    %s
+            WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
+            ELSE (SELECT code FROM checks WHERE not result ORDER BY code ASC LIMIT 1)
           END AS result)",
           /*boost::format → 書式文字列の設定で引数を%で繋ぐ*/
           /*boost::formatは上の1つ目の%s*/
-          {(boost::format(R"( 
-              has_role_perm AS (%s),
-              has_grantable_perm AS (%s),
-              has_perm AS (SELECT CASE
-                               WHEN (SELECT * FROM has_grantable_perm) THEN true
-                               WHEN (:creator = :target) THEN true
-                               WHEN (SELECT * FROM has_role_perm) THEN true
-                               ELSE false END
-              ),
-              )")
-            % checkAccountRolePermission(Role::kSetDetail, ":creator") /*boost::formatの文字列1　has_rol CDe_permの%s*/ /* #1 */
-            % checkAccountGrantablePermission( 
-                  Grantable::kSetMyAccountDetail, ":creator", ":target")) /*boost::formatの文字列2　has_grantable_permの%s*/
+          {(boost::format(R"(has_role_perm AS (%s),)")
+            % checkAccountRolePermission(Role::kSetQuorum, ":creator")) /*boost::formatの文字列1　has_rol CDe_permの%s*/ /* #1 */
                .str(),
-           R"( AND (SELECT * FROM has_perm))", /*上の2つ目の%s permissionがtrueなら*/
-           R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}); /*上の3つ目の%s*/
+           R"( AND (SELECT * FROM has_role_perm))", /*上の2つ目の%s permissionがtrueなら*/
+           R"( WHEN NOT (SELECT * FROM has_role_perm) THEN 2 )"});
 
       remove_sync_peer_statements_ = makeCommandStatements(
           sql_,

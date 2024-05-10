@@ -9,8 +9,8 @@ tx = iroha.transaction(
      'SetAccountDetail',
         account_id = 'admin@test',
         parts_id = 'e01001',
-        new_emissions = '89.0',
-        sum_child_emissions = '12345.0'
+        new_emissions = '3.2',
+        sum_child_emissions = '145.0'
  )]
 )
 
