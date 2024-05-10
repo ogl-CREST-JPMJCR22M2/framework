@@ -1167,17 +1167,17 @@ namespace iroha {
             new_quantity AS
              (
                  SELECT :new_emissions::decimal as newEmissions, 
-			:sum_child_emissions::decimal as sumChildEmissions,
-			:new_emissions::decimal + :sum_child_emissions::decimal as value
-                 FROM test
-                 WHERE parts_id=:partsid 
+			              :sum_child_emissions::decimal as sumChildEmissions,
+			              :new_emissions::decimal + :sum_child_emissions::decimal as value
+                 FROM Metadata
+                 WHERE PartsID=:partsid 
              ),
             checks AS -- error code and check result
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM test
-                WHERE parts_id = :partsid
+                FROM Metadata
+                WHERE PartsID = :partsid
 
                 -- check value of new_emissions
                 UNION
@@ -1202,12 +1202,14 @@ namespace iroha {
             ),
 	    inserted AS
             (
-                UPDATE test SET emissions = (
-                	SELECT value FROM new_quantity
-			WHERE parts_id=:partsid
-			AND (SELECT bool_and(checks.result) FROM checks)
-		)
-		WHERE parts_id=:partsid %s
+                UPDATE Metadata SET 
+                TotalEMISSIONS = (
+                  SELECT value FROM new_quantity
+                  WHERE PartsID=:partsid
+                  AND (SELECT bool_and(checks.result) FROM checks
+                ), 
+                EMISSIONS = newEmissions
+                WHERE PartsID=:partsid %s
                 RETURNING (1)
             )
           SELECT CASE

@@ -256,17 +256,18 @@ CREATE TABLE top_block_info (
     hash character varying(128)
 );
 
-CREATE TABLE test (
-    parts_id character varying(288),
-    emissions decimal NOT NULL ,
-    PRIMARY KEY (parts_id)
+CREATE TABLE Metadata (
+    PartsID CHARACTER varying(288),
+    TotalEMISSIONS DECIMAL NOT NULL ,
+    EMISSIONS DECIMAL NOT NULL ,
+    TimeStamp TIMESTAMP NOT NULL,
+    PRIMARY KEY (PartsID)
 );
 
-INSERT INTO test VALUES
-	('e01001', '0.0'), 
-	('e01002', '0.0'),
-	('w02001', '0.0'),
-	('w03001', '0.0');
+INSERT INTO Metadata VALUES
+	('e01001', '0.0', '0.0', '2024-04-01 08:00:00'), 
+	('e01002', '0.0', '0.0', '2024-04-01 09:00:00'),
+	('w02001', '0.0', '0.0', '2024-04-01 10:00:00');
 
 CREATE TABLE role (
     role_id character varying(32),
