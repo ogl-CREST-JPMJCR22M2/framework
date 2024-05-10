@@ -260,14 +260,13 @@ CREATE TABLE Metadata (
     PartsID CHARACTER varying(288),
     TotalEMISSIONS DECIMAL NOT NULL ,
     EMISSIONS DECIMAL NOT NULL ,
-    TimeStamp TIMESTAMP NOT NULL,
     PRIMARY KEY (PartsID)
 );
 
 INSERT INTO Metadata VALUES
-	('e01001', '0.0', '0.0', '2024-04-01 08:00:00'), 
-	('e01002', '0.0', '0.0', '2024-04-01 09:00:00'),
-	('w02001', '0.0', '0.0', '2024-04-01 10:00:00');
+	('e01001', '0.0', '0.0'), 
+	('e01002', '0.0', '0.0'),
+	('w02001', '0.0', '0.0');
 
 CREATE TABLE role (
     role_id character varying(32),

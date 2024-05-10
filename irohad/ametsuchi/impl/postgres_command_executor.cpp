@@ -1202,14 +1202,12 @@ namespace iroha {
             ),
 	    inserted AS
             (
-                UPDATE Metadata SET 
-                TotalEMISSIONS = (
-                  SELECT value FROM new_quantity
-                  WHERE PartsID=:partsid
-                  AND (SELECT bool_and(checks.result) FROM checks
-                ), 
-                EMISSIONS = newEmissions
-                WHERE PartsID=:partsid %s
+                UPDATE Metadata SET (TotalEMISSIONS, EMISSIONS) = (
+                	( SELECT value FROM new_quantity),
+			( SELECT newEmissions FROM new_quantity)
+		)
+                WHERE PartsID=:partsid
+		AND (SELECT bool_and(checks.result) FROM checks) %s
                 RETURNING (1)
             )
           SELECT CASE
