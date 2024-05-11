@@ -1169,14 +1169,14 @@ namespace iroha {
                  SELECT :new_emissions::decimal as newEmissions, 
 			              :sum_child_emissions::decimal as sumChildEmissions,
 			              :new_emissions::decimal + :sum_child_emissions::decimal as value
-                 FROM Metadata
+                 FROM CO2Emissions
                  WHERE PartsID=:partsid 
              ),
             checks AS -- error code and check result
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM Metadata
+                FROM CO2Emissions
                 WHERE PartsID = :partsid
 
                 -- check value of new_emissions
@@ -1202,7 +1202,7 @@ namespace iroha {
             ),
 	    inserted AS
             (
-                UPDATE Metadata SET (TotalEMISSIONS, EMISSIONS) = (
+                UPDATE CO2Emissions SET (TotalEMISSIONS, EMISSIONS) = (
                 	( SELECT value FROM new_quantity),
 			( SELECT newEmissions FROM new_quantity)
 		)
@@ -1215,13 +1215,12 @@ namespace iroha {
             WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
             ELSE (SELECT code FROM checks WHERE not result ORDER BY code ASC LIMIT 1)
           END AS result)",
-          /*boost::format → 書式文字列の設定で引数を%で繋ぐ*/
           /*boost::formatは上の1つ目の%s*/
           {(boost::format(R"(has_role_perm AS (%s),)")
-            % checkAccountRolePermission(Role::kSetQuorum, ":creator")) /*boost::formatの文字列1　has_rol CDe_permの%s*/ /* #1 */
+            % checkAccountRolePermission(Role::kSetQuorum, ":creator")) /*admin@testがkSetDetailを持ってなかったため*/
                .str(),
-           R"( AND (SELECT * FROM has_role_perm))", /*上の2つ目の%s permissionがtrueなら*/
-           R"( WHEN NOT (SELECT * FROM has_role_perm) THEN 2 )"});
+           R"( AND (SELECT * FROM has_role_perm))",
+           R"( WHEN NOT (SELECT * FROM has_role_perm) THEN 2 )"}); /*THEN n:エラーコードnとしてコマンド実行時に表示される*/
 
       remove_sync_peer_statements_ = makeCommandStatements(
           sql_,

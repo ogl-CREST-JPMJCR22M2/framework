@@ -256,17 +256,17 @@ CREATE TABLE top_block_info (
     hash character varying(128)
 );
 
-CREATE TABLE Metadata (
+CREATE TABLE CO2Emissions (
     PartsID CHARACTER varying(288),
     TotalEMISSIONS DECIMAL NOT NULL ,
     EMISSIONS DECIMAL NOT NULL ,
     PRIMARY KEY (PartsID)
 );
 
-INSERT INTO Metadata VALUES
+INSERT INTO CO2Emissions VALUES
 	('e01001', '0.0', '0.0'), 
 	('e01002', '0.0', '0.0'),
-	('w02001', '0.0', '0.0');
+	('n02001', '0.0', '0.0');
 
 CREATE TABLE role (
     role_id character varying(32),
