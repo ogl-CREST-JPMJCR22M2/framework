@@ -260,13 +260,16 @@ CREATE TABLE CO2Emissions (
     PartsID CHARACTER varying(288),
     TotalEMISSIONS DECIMAL NOT NULL ,
     EMISSIONS DECIMAL NOT NULL ,
+    ChildPartsID CHARACTER[],
     PRIMARY KEY (PartsID)
 );
 
 INSERT INTO CO2Emissions VALUES
-	('e01001', '0.0', '0.0'), 
-	('e01002', '0.0', '0.0'),
-	('n02001', '0.0', '0.0');
+	('e01001', '0.0', '0.0', '{}'), 
+	('e01002', '0.0', '0.0', '{}'),
+  ('e02001', '0.0', '0.0', '{'e01001', 'e01002'}'),
+	('n02001', '0.0', '0.0', '{}'),
+  ('e02003', '0.0', '0.0', '{'n02001', 'e02001'}');
 
 CREATE TABLE role (
     role_id character varying(32),
