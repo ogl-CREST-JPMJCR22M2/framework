@@ -53,11 +53,6 @@ static const std::chrono::milliseconds kExitCheckPeriod{1000};
 DEFINE_string(config, "", "Specify iroha provisioning path.");
 
 /**
- * Creating input argument for the configuration file of offchainDB location.
- */
-DEFINE_string(config_0ffDB, "", "Specify iroha provisioning path.");
-
-/**
  * Creating input argument for the genesis block file location.
  */
 DEFINE_string(genesis_block, "", "Specify file with initial block");

@@ -25,6 +25,7 @@ namespace config_members {
   const char *User = "user";
   const char *Password = "password";
   const char *WorkingDbName = "working database";
+  const char *WorkingDbName_offDB = "working offchain-database";
   const char *MaintenanceDbName = "maintenance database";
   const char *DbPath = "path";
   const char *DbType = "type";

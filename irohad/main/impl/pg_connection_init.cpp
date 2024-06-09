@@ -209,8 +209,8 @@ namespace {
     try {
       return getMaintenanceSession(postgres_options) |
           [&](auto maintenance_sql) {
-            *maintenance_sql << fmt::format("create database {};",
-                                            postgres_options.workingDbName());
+            *maintenance_sql << fmt::format("create database %s; create database %s;")
+                                            %postgres_options.workingDbName()%postgres_options.workingDbName_offDB();
             return getWorkingDbSession(postgres_options) | [](auto session)
                        -> iroha::expected::Result<void, std::string> {
               prepareTables(*session);
