@@ -43,6 +43,7 @@
 
 static const std::string kListenIp = "0.0.0.0";
 static const std::string kLogSettingsFromConfigFile = "config_file";
+static const std::string kLogSettingsFromConfigFileoffDB = "config_file_offDB";
 static const std::string kDefaultWorkingDatabaseName{"iroha_default"};
 static const std::chrono::milliseconds kExitCheckPeriod{1000};
 
@@ -50,6 +51,11 @@ static const std::chrono::milliseconds kExitCheckPeriod{1000};
  * Creating input argument for the configuration file location.
  */
 DEFINE_string(config, "", "Specify iroha provisioning path.");
+
+/**
+ * Creating input argument for the configuration file of offchainDB location.
+ */
+DEFINE_string(config_0ffDB, "", "Specify iroha provisioning path.");
 
 /**
  * Creating input argument for the genesis block file location.
