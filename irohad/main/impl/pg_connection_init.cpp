@@ -209,8 +209,8 @@ namespace {
     try {
       return getMaintenanceSession(postgres_options) |
           [&](auto maintenance_sql) {
-            *maintenance_sql << fmt::format("create database {}; create database offchainDB;",
-                                            postgres_options.workingDbName);
+            *maintenance_sql << fmt::format("create database {};",
+                                            postgres_options.workingDbName());
             return getWorkingDbSession(postgres_options) | [](auto session)
                        -> iroha::expected::Result<void, std::string> {
               prepareTables(*session);
@@ -250,6 +250,7 @@ insert into schema_version
           return fmt::format("{}, {}, {}", v.major, v.minor, v.patch);
         }()
         + R"();
+
 CREATE TABLE top_block_info (
     lock CHAR(1) DEFAULT 'X' NOT NULL PRIMARY KEY,
     height int,
