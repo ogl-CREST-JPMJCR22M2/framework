@@ -4,7 +4,7 @@ from psycopg2._psycopg import connection, cursor
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 dsn = {
-    "dbname": "offchainDB",
+    "dbname": "offchaindb",
     "user": "postgres",
     "password": "postgres",
     "port": "5432",
