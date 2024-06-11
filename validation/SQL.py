@@ -1,8 +1,6 @@
 import SQLexecutor as SQLexe
 from psycopg2 import sql
 
-
-
 ############################
 ## Insert into offchainDB ##
 ############################
@@ -20,7 +18,6 @@ def insert_data(partsid, totalemissions, emissions):
         )
         
     SQLexe.COMMANDexecutor(SQL, 'off') 
-
 
 
 #######################################
