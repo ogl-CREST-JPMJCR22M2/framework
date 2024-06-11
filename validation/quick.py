@@ -6,4 +6,7 @@ net = IrohaGrpc('localhost:50051')
 
 def validasion():
 
-def get_offchain_value
+def insertDB():
+    
+
+def get_offchain_value():

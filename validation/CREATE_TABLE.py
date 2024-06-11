@@ -4,7 +4,7 @@ from psycopg2._psycopg import connection, cursor
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 dsn = {
-    "dbname": "postgres",
+    "dbname": "offchainDB",
     "user": "postgres",
     "password": "postgres",
     "port": "5432",
@@ -20,13 +20,12 @@ try:
         cur: cursor
 
         cur.execute(
-            "CREATE DATABASE offchainDB;
-            CREATE TABLE IF NOT EXISTS offchainDB_CO2EMISSIONS(
-                    PartsID CHARACTER varying(288),
-                    TotalEMISSIONS DECIMAL NOT NULL ,
-                    EMISSIONS DECIMAL NOT NULL ,
-                    PRIMARY KEY (PartsID)
-         );"
+            "CREATE TABLE IF NOT EXISTS offchainDB_CO2EMISSIONS("
+                    "PartsID CHARACTER varying(288),"
+                    "TotalEMISSIONS DECIMAL NOT NULL ,"
+                    "EMISSIONS DECIMAL NOT NULL ,"
+                    "PRIMARY KEY (PartsID)"
+            ");"
         )
 finally:
     if conn:
