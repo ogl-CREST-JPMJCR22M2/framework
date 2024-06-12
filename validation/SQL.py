@@ -6,7 +6,6 @@ from psycopg2 import sql
 ############################
 
 def insert_data(partsid, totalemissions, emissions):
-    
     SQL = sql.SQL("""
             INSERT INTO offchaindb_co2emissions (partsid, totalemissions, emissions) VALUES ({PartsID}, {TotalEMISSIONS}, {EMISSIONS})
             ON CONFLICT (partsid)
@@ -16,8 +15,8 @@ def insert_data(partsid, totalemissions, emissions):
             TotalEMISSIONS = sql.Literal(totalemissions),
             EMISSIONS = sql.Literal(emissions)
         )
-        
-    SQLexe.COMMANDexecutor(SQL, 'off') 
+
+    SQLexe.COMMANDexecutor(SQL, 'off')
 
 
 #######################################
@@ -25,12 +24,11 @@ def insert_data(partsid, totalemissions, emissions):
 #######################################
 
 def get_TotalEMISSIONS(partsid, db = 'off'):
-    
     tablename = 'offchaindb_co2emissions'
 
     if db == 'wsv':
         tablename = 'co2emissions'
-    
+
     SQL = sql.SQL("""
             SELECT totalemissions FROM {TABLEname} WHERE partsid = {PartsID};
         """).format(
@@ -38,7 +36,7 @@ def get_TotalEMISSIONS(partsid, db = 'off'):
             PartsID = sql.Literal(partsid)
         )
 
-    return SQLexe.QUERYexecutor(SQL, db)
+    return SQLexe.QUERYexecutor(SQL, db)[0][0]
 
 
 
@@ -49,7 +47,5 @@ if __name__ == '__main__':
     emissions = 1.33
 
     #insert_data(partsid, totalemissions, emissions)
-    
+
     print(get_TotalEMISSIONS(partsid, 'wsv'))
-
-

@@ -1,24 +1,24 @@
 from iroha import Iroha, IrohaCrypto, IrohaGrpc
-import sys #コマンドライン変数
 from psycopg2 import sql
 import SQLexecutor as SQLexe
+import SQL
 
 iroha = Iroha('admin@test')
 net = IrohaGrpc('localhost:50051')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
-def get_childTotalEMISSIONS(partsid):
-    
+def get_childparts(partsid):
+
     SQL = sql.SQL("""
             SELECT childpartsid FROM co2emissions WHERE partsid = {PartsID};
         """).format(
             PartsID = sql.Literal(partsid)
         )
 
-    childpartsid = SQLexe.QUERYexecutor(SQL, 'wsv')
-    print(type(childpartsid))
+    return SQLexe.QUERYexecutor(SQL, 'wsv')[0][0]
 
-def IROHA_COMMANDexecutor(partsid, emissions, accountid = 'admin@test'):
+
+def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, accountid = 'admin@test'):
     tx = iroha.transaction(
         [iroha.command(
             'SetAccountDetail',
@@ -35,17 +35,21 @@ def IROHA_COMMANDexecutor(partsid, emissions, accountid = 'admin@test'):
     for status in net.tx_status_stream(tx):
         print(status)
 
+    if status[0] == 'COMMITTED':
+        totalemissions =  SQL.get_TotalEMISSIONS(partsid, db = 'wsv')
+        SQL.insert_data(partsid, totalemissions, emissions)
+        return
+
+    else:
+        return
+
 
 if __name__ == '__main__':
 
-<<<<<<< HEAD
-    partsid = 'e02003'
-=======
-    partsid = 'e01001'
->>>>>>> 7878c05cea927e7f1506ff6570b7ad537847f0d6
+    partsid = 'n02001'
     totalemissions = 331.01
-    emissions = 1.33
+    emissions = '10001.0'
+    sumchildemissions = '12345.0'
 
     #insert_data(partsid, totalemissions, emissions)
-    
-    print(get_childTotalEMISSIONS(partsid))
+    IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, 'admin@test')

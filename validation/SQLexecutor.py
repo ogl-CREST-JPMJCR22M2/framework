@@ -21,16 +21,15 @@ dsn_wsv = {
 def QUERYexecutor(SQL, db = 'off'):
 
     conn: Optional[connection] = None
-    
-    try:
 
+    try:
         if db == 'wsv': conn = connect(**dsn_wsv)
         else : conn = connect(**dsn)
 
         with conn.cursor() as cur:
             cur.execute(SQL)
             data = cur.fetchall()
-    
+            
     finally:
         if conn:
             conn.close()
@@ -45,16 +44,14 @@ def COMMANDexecutor(SQL, db = 'off'):
     conn: Optional[connection] = None
 
     try:
+        if db == 'wsv': conn = connect(**dsn_wsv)
+        else : conn = connect(**dsn)
 
-        if db == 'wsv':
-            dsn = dsn_wsv
-
-        conn = connect(**dsn)
         conn.autocommit = True
 
         with conn.cursor() as cur:
             cur.execute(SQL)
-            
+
     finally:
         if conn:
             conn.close()
