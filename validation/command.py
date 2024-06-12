@@ -38,7 +38,11 @@ def IROHA_COMMANDexecutor(partsid, emissions, accountid = 'admin@test'):
 
 if __name__ == '__main__':
 
+<<<<<<< HEAD
     partsid = 'e02003'
+=======
+    partsid = 'e01001'
+>>>>>>> 7878c05cea927e7f1506ff6570b7ad537847f0d6
     totalemissions = 331.01
     emissions = 1.33
 
