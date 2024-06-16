@@ -19,9 +19,7 @@ dsn_wsv = {
 }
 
 def QUERYexecutor(SQL, db = 'off'):
-
     conn: Optional[connection] = None
-
     try:
         if db == 'wsv': conn = connect(**dsn_wsv)
         else : conn = connect(**dsn)
@@ -40,9 +38,7 @@ def QUERYexecutor(SQL, db = 'off'):
 
 
 def COMMANDexecutor(SQL, db = 'off'):
-
     conn: Optional[connection] = None
-
     try:
         if db == 'wsv': conn = connect(**dsn_wsv)
         else : conn = connect(**dsn)

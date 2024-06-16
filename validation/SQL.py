@@ -39,6 +39,21 @@ def get_TotalEMISSIONS(partsid, db = 'off'):
     return SQLexe.QUERYexecutor(SQL, db)[0][0]
 
 
+def get_EMISSIONS(partsid, db = 'off'):
+    tablename = 'offchaindb_co2emissions'
+
+    if db == 'wsv':
+        tablename = 'co2emissions'
+
+    SQL = sql.SQL("""
+            SELECT emissions FROM {TABLEname} WHERE partsid = {PartsID};
+        """).format(
+            TABLEname = sql.Identifier(tablename),
+            PartsID = sql.Literal(partsid)
+        )
+
+    return SQLexe.QUERYexecutor(SQL, db)[0][0]
+
 
 if __name__ == '__main__':
 

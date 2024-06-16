@@ -52,4 +52,4 @@ if __name__ == '__main__':
     sumchildemissions = '12345.0'
 
     #insert_data(partsid, totalemissions, emissions)
-    IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, 'admin@test')
+    #IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, 'admin@test')
