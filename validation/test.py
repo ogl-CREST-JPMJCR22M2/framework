@@ -36,7 +36,7 @@ def get_TotalEMISSIONS(partsid):
 
     return QUERYexecutor(SQL)[0][0]
 
-def get_childparts(partsid):
+def get_ChlidParts(partsid):
 
     SQL = sql.SQL("""
             SELECT childpartsid FROM co2emissions WHERE partsid = {PartsID};
@@ -47,7 +47,7 @@ def get_childparts(partsid):
     return QUERYexecutor(SQL)[0][0]
 
 def quickly_calculate_totalemissions(partsid):
-    childpartsid = get_childparts(partsid)
+    childpartsid = get_ChlidParts(partsid)
     
     if not childpartsid :
         return get_TotalEMISSIONS(partsid)

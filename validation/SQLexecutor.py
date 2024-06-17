@@ -18,6 +18,8 @@ dsn_wsv = {
         "host": "localhost",
 }
 
+
+
 def QUERYexecutor(SQL, db = 'off'):
     conn: Optional[connection] = None
     try:

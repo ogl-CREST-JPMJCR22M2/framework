@@ -1,22 +1,95 @@
 from iroha import Iroha, IrohaCrypto, IrohaGrpc
 from psycopg2 import sql
 import SQLexecutor as SQLexe
-import SQL
 
 iroha = Iroha('admin@test')
 net = IrohaGrpc('localhost:50051')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
-def get_childparts(partsid):
+
+############################
+## Insert into offchainDB ##
+############################
+
+def insert_data(partsid, totalemissions, emissions):
+    SQL = sql.SQL("""
+            INSERT INTO offchaindb_co2emissions (partsid, totalemissions, emissions) VALUES ({PartsID}, {TotalEMISSIONS}, {EMISSIONS})
+            ON CONFLICT (partsid)
+            DO UPDATE SET totalemissions = {TotalEMISSIONS}, emissions = {EMISSIONS};
+        """).format(
+            PartsID = sql.Literal(partsid),
+            TotalEMISSIONS = sql.Literal(totalemissions),
+            EMISSIONS = sql.Literal(emissions)
+        )
+
+    SQLexe.COMMANDexecutor(SQL, 'off')
+
+
+###############################################
+## Get TotalEMISSIONS from offchainDB or WSV ##
+###############################################
+
+def get_TotalEMISSIONS(partsid, db = 'off'):
+    tablename = 'offchaindb_co2emissions'
+
+    if db == 'wsv':
+        tablename = 'co2emissions'
 
     SQL = sql.SQL("""
-            SELECT childpartsid FROM co2emissions WHERE partsid = {PartsID};
+            SELECT totalemissions FROM {TABLEname} WHERE partsid = {PartsID};
         """).format(
+            TABLEname = sql.Identifier(tablename),
             PartsID = sql.Literal(partsid)
         )
 
+    return SQLexe.QUERYexecutor(SQL, db)[0][0]
+
+
+###################################
+## Get EMISSIONS from offchainDB ##
+###################################
+
+def get_EMISSIONS(partsid):
+
+    SQL = sql.SQL("""
+            SELECT emissions FROM offchaindb_co2emissions WHERE partsid = {PartsID};
+        """).format(
+            PartsID = sql.Literal(partsid)
+        )
+    return SQLexe.QUERYexecutor(SQL, db)[0][0]
+
+
+################################
+## Get Child_Partsid from wsv ##
+################################
+
+def get_ChlidParts(partsid):
+
+    SQL = sql.SQL("""
+            SELECT childpartsid FROM Partsinfo WHERE partsid = {PartsID};
+        """).format(
+            PartsID = sql.Literal(partsid)
+        )
     return SQLexe.QUERYexecutor(SQL, 'wsv')[0][0]
 
+
+###########################
+## Get DataLink from wsv ##
+###########################
+
+def get_DataLink(partsid):
+
+    SQL = sql.SQL("""
+            SELECT DataLink FROM Partsinfo WHERE partsid = {PartsID};
+        """).format(
+            PartsID = sql.Literal(partsid)
+        )
+    return SQLexe.QUERYexecutor(SQL, 'wsv')[0][0]
+
+
+#######################
+## Run iroha command ##
+#######################
 
 def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, accountid = 'admin@test'):
     tx = iroha.transaction(
@@ -36,8 +109,8 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, accountid = 'ad
         print(status)
 
     if status[0] == 'COMMITTED':
-        totalemissions =  SQL.get_TotalEMISSIONS(partsid, db = 'wsv')
-        SQL.insert_data(partsid, totalemissions, emissions)
+        totalemissions =  get_TotalEMISSIONS(partsid, db = 'wsv')
+        insert_data(partsid, totalemissions, emissions)
         return
 
     else:
