@@ -23,7 +23,7 @@ def quickly_validasion(partsid):
     
      """ TotalEmissionの再計算 """
     emissions = SQL.get_TotalEMISSIONS(partsid, 'wsv') # child_totalEmissionの取得と合計
-    IROHA_COMMANDexecutor(partsid, emissions, sum_child_emissions, 'admin@test') # コマンドによる再計算
+    common.IROHA_COMMANDexecutor(partsid, emissions, sum_child_emissions, 'admin@test') # コマンドによる再計算
 
     """ データ検証 """
     wsv_value = SQL.get_TotalEMISSIONS(partsid, 'wsv')
@@ -35,25 +35,25 @@ def quickly_validasion(partsid):
         
 
 def calculate_totalemissions(partsid):
-
-    if partsid == 'Nan':
-         """ TotalEmissionの再計算 """
-        emissions = SQL.get_TotalEMISSIONS(partsid, 'wsv') # child_totalEmissionの取得と合計
-        return IROHA_COMMANDexecutor(partsid, emissions, sum_child_emissions, 'admin@test') # コマンドによる再計算
-    else :
-        for i in range(len(childpartsid)) :　# child_totalEmissionの取得と合計
-            sum_child_emissions += SQL.get_TotalEMISSIONS(i, 'wsv') 
-            calculate_totalemissions(childpartsid[i])
+    childpartsid = common.get_childparts(partsid)
+    emissions = SQL.get_TotalEMISSIONS(partsid, 'wsv')   # child_totalEmissionの取得と合計
     
+    if not childpartsid :
+        common.IROHA_COMMANDexecutor(partsid, emissions, 0.0, 'admin@test') # コマンドによる再計算
+        return SQL.get_TotalEMISSIONS(partsid, 'wsv')
 
+    else :
+        data =  0
+        for i in range(len(childpartsid)):
+            data += calculate_totalemissions(childpartsid[i])
+    
+        common.IROHA_COMMANDexecutor(partsid, emissions, data, 'admin@test') # コマンドによる再計算
+        return data
+
+    
 
 def original_validatioin(partsid):
     offdb_value = SQL.get_TotalEMISSIONS(partsid, 'off') # 比較元:offchainDB上の値
-
-    """ child_totalEmissionの計算 """
-    child_partsid = common.get_childparts(partsid) # 下位部品のPartsIDの取得
-    sum_child_emissions = 0
-
     calculate_totalemissions(partsid)
 
     """ データ検証 """
@@ -64,3 +64,8 @@ def original_validatioin(partsid):
     else :
         print("Validation Successful")
 
+if __name__ == '__main__':
+
+    #insert_data(partsid, totalemissions, emissions)
+
+    quickly_calculate_totalemissions('P01001')

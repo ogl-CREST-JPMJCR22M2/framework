@@ -4,7 +4,7 @@ from psycopg2._psycopg import connection, cursor
 
 dsn = {
         "dbname": "test",
-        "user": "horiharuka",
+        "user": "postgres",
         "password": "mysecretpassword",
         "port": "5432",
         "host": "localhost",
@@ -34,7 +34,7 @@ def get_TotalEMISSIONS(partsid):
             PartsID = sql.Literal(partsid)
         )
 
-    return QUERYexecutor(SQL, db)[0][0]
+    return QUERYexecutor(SQL)[0][0]
 
 def get_childparts(partsid):
 
@@ -44,26 +44,23 @@ def get_childparts(partsid):
             PartsID = sql.Literal(partsid)
         )
 
-    return SQLexe.QUERYexecutor(SQL, 'wsv')[0][0]
+    return QUERYexecutor(SQL)[0][0]
 
-
-def calculate_totalemissions(partsid):
-
-    if partsid == 'Nan':
-        """ TotalEmissionの再計算 """
-        print(partsid)
-        return 0
-        #return IROHA_COMMANDexecutor(partsid, emissions, sum_child_emissions, 'admin@test') # コマンドによる再計算
+def quickly_calculate_totalemissions(partsid):
+    childpartsid = get_childparts(partsid)
+    
+    if not childpartsid :
+        return get_TotalEMISSIONS(partsid)
     else :
-        childpartsid = get_childparts(partsid)
-        for i in range(len(childpartsid)) : # child_totalEmissionの取得と合計
-            calculate_totalemissions(childpartsid[i])
-            sum_child_emissions += get_TotalEMISSIONS(childpartsid[i]) 
-            
+        data =  0
+        for i in range(len(childpartsid)):
+            data += calculate_totalemissions(childpartsid[i])
+        return data
+
 
 
 if __name__ == '__main__':
 
     #insert_data(partsid, totalemissions, emissions)
 
-    calculate_totalemissions('P01001')
+    quickly_calculate_totalemissions('P01001')
