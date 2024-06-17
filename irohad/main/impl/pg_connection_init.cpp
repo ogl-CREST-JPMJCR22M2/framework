@@ -260,8 +260,6 @@ CREATE TABLE top_block_info (
 CREATE TABLE CO2Emissions (
     PartsID CHARACTER varying(288) NOT NULL,
     TotalEMISSIONS DECIMAL NOT NULL ,
-    ChildPartsID CHARACTER varying(288)[],
-    DataLink CHARACTER varying(288) NOT NULL,
     PRIMARY KEY (PartsID)
 );
 
@@ -314,7 +312,7 @@ INSERT INTO Partsinfo VALUES
   ('P03007', 'peerB', '{}'),
   ('P03008', 'peerC', '{P04020,P04021,P04022}'),
   ('P03009', 'peerB', '{P04023,P04024}'),
-  ('P03010', 'peerC', '{}', 'peerC'),
+  ('P03010', 'peerC', '{}'),
   ('P03011', 'peerC', '{}'),
   ('P03012', 'peerC', '{P04025,P04026,P04027}'),
   ('P03013', 'peerB', '{P04028,P04029,P04030}'),
