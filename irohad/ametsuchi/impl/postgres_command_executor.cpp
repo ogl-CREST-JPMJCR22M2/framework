@@ -1166,7 +1166,8 @@ namespace iroha {
           WITH %s
             new_quantity AS
              (
-                 SELECT :sum_child_emissions::decimal as sumChildEmissions,
+                 SELECT :new_emissions::decimal as newEmissions,
+                    :sum_child_emissions::decimal as sumChildEmissions,
 			              :new_emissions::decimal + :sum_child_emissions::decimal as value
                  FROM CO2Emissions
                  WHERE PartsID=:partsid 

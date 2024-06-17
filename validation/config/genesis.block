@@ -9,7 +9,7 @@
                        {
                           "addPeer":{
                              "peer":{
-                                "address":"PeerA:10001",
+                                "address":"ubuntuA:10001",
                                 "peerKey":"38bef2cfb009f1b26fb151a4ef7a8467165bae733a0d082da144f8017b2401bb"
                              }
                           }
@@ -17,14 +17,14 @@
                        {
                           "addPeer":{
                              "peer":{
-                                "address":"PeerB:10001",
+                                "address":"ubuntuB:10001",
                                 "peerKey":"291ef9d5f3e855a6c7ffba7d4d66ad064472a6048f6afa9d0ee3f698566664f9"
                              }
                           }
                        },{
                           "addPeer":{
                              "peer":{
-                                "address":"PeerC:10001",
+                                "address":"ubuntuC:10001",
                                 "peerKey":"bf057854f94c25225d001315433b519b42314a04756cc12d19128f8895dd090e"
                              }
                           }
