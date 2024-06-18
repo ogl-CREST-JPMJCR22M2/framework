@@ -18,7 +18,11 @@ dsn_wsv = {
         "host": "localhost",
 }"""
 
+<<<<<<< HEAD
 def QUERYexecutor(SQL, peer, db = 'off'):
+=======
+def QUERYexecutor(SQL,  peer, db = 'off'):
+>>>>>>> 37791a45f061fb2e68cf26e082c2e9604fa69fba
     conn: Optional[connection] = None
     try:
         if db == 'wsv': dbname = 'iroha_default'

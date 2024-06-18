@@ -73,7 +73,11 @@ def original_validatioin(partsid, peer):
     calculate_totalemissions(partsid, peer)
 
     #validation
+<<<<<<< HEAD
     wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv')
+=======
+    wsv_value = common.get_TotalEMISSIONS(partsid, 'wsv', peer)
+>>>>>>> 37791a45f061fb2e68cf26e082c2e9604fa69fba
     
     if wsv_value != offdb_value:
         print("Validation Failed")
