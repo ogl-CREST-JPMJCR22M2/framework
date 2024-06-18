@@ -23,17 +23,17 @@ def more_quickly_validation(partsid, peer):
 def quickly_validation(partsid, peer):
     offdb_value = common.get_TotalEMISSIONS(partsid, 'off', peer) # 比較元:offchainDB上の値
 
-    """ WSV上の値を用いたchild_totalEmissionの計算 """
+    # calculating child_totalEmission with WSV values
     child_partsid = common.get_ChlidParts(partsid, peer) # 下位部品のPartsIDの取得
     sum_child_emissions = 0
-    for i in range(len(childpartsid)) :　# child_totalEmissionの取得と合計
+    for i in range(len(childpartsid)) : # child_totalEmissionの取得と合計
         sum_child_emissions += common.get_TotalEMISSIONS(i, 'wsv', peer) 
     
-     """ TotalEmissionの再計算 """
+    # calculating TotalEmissions
     emissions = common.get_TotalEMISSIONS(partsid, 'wsv', peer) # child_totalEmissionの取得と合計
     common.IROHA_COMMANDexecutor(partsid, emissions, sum_child_emissions, 'admin@test') # コマンドによる再計算
 
-    """ データ検証 """
+    #validation
     wsv_value = common.get_TotalEMISSIONS(partsid, 'wsv', peer)
     
     if wsv_value != offdb_value:
@@ -72,7 +72,7 @@ def original_validatioin(partsid, peer):
     offdb_value = common.get_TotalEMISSIONS(partsid, 'off', peer) # 比較元:offchainDB上の値
     calculate_totalemissions(partsid, peer)
 
-    """ データ検証 """
+    #validation
     wsv_value = common.get_TotalEMISSIONS(partsid, 'wsv', peer)
     
     if wsv_value != offdb_value:

@@ -18,7 +18,7 @@ dsn_wsv = {
         "host": "localhost",
 }"""
 
-def QUERYexecutor(SQL, db = 'off', peer):
+def QUERYexecutor(SQL,  peer, db = 'off'):
     conn: Optional[connection] = None
     try:
         if db == 'wsv': dbname = 'iroha_default'
@@ -44,7 +44,7 @@ def QUERYexecutor(SQL, db = 'off', peer):
     return data
 
 
-def COMMANDexecutor(SQL, db = 'off',  peer):
+def COMMANDexecutor(SQL,  peer, db = 'off'):
     conn: Optional[connection] = None
     try:
         if db == 'wsv': dbname = 'iroha_default'
