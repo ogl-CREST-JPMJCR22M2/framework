@@ -7,8 +7,8 @@ import sys #コマンドライン変数
 ##############################################
 
 def more_quickly_validation(partsid, peer):
-    wsv_value = common.get_TotalEMISSIONS(partsid, 'wsv', peer) # 比較先:WSV上の値
-    offdb_value = common.get_TotalEMISSIONS(partsid, 'off', peer) # 比較元:offchainDB上の値
+    wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv') # Comparison destination : values in WSV
+    offdb_value = common.get_TotalEMISSIONS(partsid, peer, 'off') # Comparison source : values in offchainDB
 
     if wsv_value != offdb_value:
         print("Validation Failed")
@@ -21,20 +21,20 @@ def more_quickly_validation(partsid, peer):
 ########################################################
 
 def quickly_validation(partsid, peer):
-    offdb_value = common.get_TotalEMISSIONS(partsid, 'off', peer) # 比較元:offchainDB上の値
+    offdb_value = common.get_TotalEMISSIONS(partsid, peer, 'off') # Comparison source : values in offchainDB
 
-    """ WSV上の値を用いたchild_totalEmissionの計算 """
-    child_partsid = common.get_ChlidParts(partsid, peer) # 下位部品のPartsIDの取得
+    # calculating child_totalEmission with WSV values
+    child_partsid = common.get_ChlidParts(partsid, peer) # get child_partsids
     sum_child_emissions = 0
-    for i in range(len(childpartsid)) :　# child_totalEmissionの取得と合計
-        sum_child_emissions += common.get_TotalEMISSIONS(i, 'wsv', peer) 
+    for i in range(len(childpartsid)) : # get and sum  child_partsids
+        sum_child_emissions += common.get_TotalEMISSIONS(i, peer, 'wsv') 
     
-     """ TotalEmissionの再計算 """
-    emissions = common.get_TotalEMISSIONS(partsid, 'wsv', peer) # child_totalEmissionの取得と合計
-    common.IROHA_COMMANDexecutor(partsid, emissions, sum_child_emissions, 'admin@test') # コマンドによる再計算
+    # calculating TotalEmissions
+    emissions = common.get_TotalEMISSIONS(partsid, peer, 'wsv') # get and sum child_totalEmission
+    common.IROHA_COMMANDexecutor(partsid, emissions, sum_child_emissions, peer, 'admin@test') # recalculating with command
 
-    """ データ検証 """
-    wsv_value = common.get_TotalEMISSIONS(partsid, 'wsv', peer)
+    #validation
+    wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv')
     
     if wsv_value != offdb_value:
         print("Validation Failed")
@@ -49,18 +49,18 @@ def quickly_validation(partsid, peer):
 def calculate_totalemissions(partsid, peer):
     datalink = get_DataLink(partsid, peer)
     childpartsid = common.get_ChlidParts(partsid, peer)
-    emissions = common.get_TotalEMISSIONS(partsid, 'wsv', datalink)   # child_totalEmissionの取得と合計
+    emissions = common.get_TotalEMISSIONS(partsid, datalink, 'wsv')   # child_totalEmissionの取得と合計
     
     if not childpartsid :
-        common.IROHA_COMMANDexecutor(partsid, emissions, 0.0, 'admin@test', peer) # コマンドによる再計算
-        return common.get_TotalEMISSIONS(partsid, 'wsv', datalink)
+        common.IROHA_COMMANDexecutor(partsid, emissions, 0.0, peer, 'admin@test') # recalculating with command
+        return common.get_TotalEMISSIONS(partsid, datalink, 'wsv')
 
     else :
         data =  0
         for i in range(len(childpartsid)):
             data += calculate_totalemissions(childpartsid[i], get_DataLink(childpartsid[i], peer))
     
-        common.IROHA_COMMANDexecutor(partsid, emissions, data, 'admin@test', peer) # コマンドによる再計算
+        common.IROHA_COMMANDexecutor(partsid, emissions, data, peer, 'admin@test') # recalculating with command
         return data
 
 
@@ -69,11 +69,11 @@ def calculate_totalemissions(partsid, peer):
 ###################################
 
 def original_validatioin(partsid, peer):
-    offdb_value = common.get_TotalEMISSIONS(partsid, 'off', peer) # 比較元:offchainDB上の値
+    offdb_value = common.get_TotalEMISSIONS(partsid, peer, 'off') # 比較元:offchainDB上の値
     calculate_totalemissions(partsid, peer)
 
-    """ データ検証 """
-    wsv_value = common.get_TotalEMISSIONS(partsid, 'wsv', peer)
+    #validation
+    wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv')
     
     if wsv_value != offdb_value:
         print("Validation Failed")

@@ -22,14 +22,14 @@ def insert_data(partsid, totalemissions, emissions, peer):
             EMISSIONS = sql.Literal(emissions)
         )
 
-    SQLexe.COMMANDexecutor(SQL, 'off', peer)
+    SQLexe.COMMANDexecutor(SQL, peer, 'off')
 
 
 ###############################################
 ## Get TotalEMISSIONS from offchainDB or WSV ##
 ###############################################
 
-def get_TotalEMISSIONS(partsid, db = 'off', peer):
+def get_TotalEMISSIONS(partsid, peer, db = 'off'):
     tablename = 'offchaindb_co2emissions'
 
     if db == 'wsv':
@@ -42,7 +42,7 @@ def get_TotalEMISSIONS(partsid, db = 'off', peer):
             PartsID = sql.Literal(partsid)
         )
 
-    return SQLexe.QUERYexecutor(SQL, db, peer)[0][0]
+    return SQLexe.QUERYexecutor(SQL, peer, db)[0][0]
 
 
 ###################################
@@ -56,7 +56,7 @@ def get_EMISSIONS(partsid, peer):
         """).format(
             PartsID = sql.Literal(partsid)
         )
-    return SQLexe.QUERYexecutor(SQL, db, peer)[0][0]
+    return SQLexe.QUERYexecutor(SQL, peer, db)[0][0]
 
 
 ################################
@@ -70,7 +70,7 @@ def get_ChlidParts(partsid, peer): #peer:executing peer(account)
         """).format(
             PartsID = sql.Literal(partsid)
         )
-    return SQLexe.QUERYexecutor(SQL, 'wsv', peer)[0][0]
+    return SQLexe.QUERYexecutor(SQL, peer, 'wsv')[0][0]
 
 
 ###########################
@@ -84,14 +84,14 @@ def get_DataLink(partsid, peer):  #peer:executing peer(account)
         """).format(
             PartsID = sql.Literal(partsid)
         )
-    return SQLexe.QUERYexecutor(SQL, 'wsv', peer)[0][0]
+    return SQLexe.QUERYexecutor(SQL, peer, 'wsv')[0][0]
 
 
 #######################
 ## Run iroha command ##
 #######################
 
-def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, accountid = 'admin@test', peer):
+def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid = 'admin@test'):
     tx = iroha.transaction(
         [iroha.command(
             'SetAccountDetail',
@@ -109,7 +109,7 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, accountid = 'ad
         print(status)
 
     if status[0] == 'COMMITTED':
-        totalemissions =  get_TotalEMISSIONS(partsid, db = 'wsv', peer)
+        totalemissions =  get_TotalEMISSIONS(partsid, peer, db = 'wsv')
         datalink = get_DataLink(partsid, peer)
         insert_data(partsid, totalemissions, emissions, datalink)
         return
