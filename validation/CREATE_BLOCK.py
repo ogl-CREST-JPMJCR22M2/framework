@@ -5,7 +5,7 @@ def original_calcu(partsid, peer, emissions):
     childpartsid = common.get_ChlidParts(partsid, peer)
 
     if not childpartsid :
-        common.IROHA_COMMANDexecutor(partsid, emissions, 0.0, peer, 'admin@test') # recalculating with command
+        common.IROHA_COMMANDexecutor(partsid, emissions, '1.0', peer, 'admin@test') # recalculating with command
         return common.get_TotalEMISSIONS(partsid, datalink, 'wsv')
 
     else :

@@ -6,15 +6,32 @@ iroha = Iroha('admin@test')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
 
-############################
-## Insert into offchainDB ##
-############################
+##########################################
+## !NOT USE NOW! UPSERT into offchainDB ##
+##########################################
 
-def insert_data(partsid, totalemissions, emissions, peer):
+def upsert_data(partsid, totalemissions, emissions, peer):
     SQL = sql.SQL("""
             INSERT INTO offchaindb_co2emissions (partsid, totalemissions, emissions) VALUES ({PartsID}, {TotalEMISSIONS}, {EMISSIONS})
             ON CONFLICT (partsid)
-            DO UPDATE SET totalemissions = {TotalEMISSIONS}, emissions = {EMISSIONS} WHERE partsid = {PartsID};
+            DO UPDATE SET totalemissions = {TotalEMISSIONS}, emissions = {EMISSIONS};
+        """).format(
+            PartsID = sql.Literal(partsid),
+            TotalEMISSIONS = sql.Literal(totalemissions),
+            EMISSIONS = sql.Literal(emissions)
+        )
+
+    SQLexe.COMMANDexecutor(SQL, peer, 'off')
+
+
+#######################
+## UPDATE offchainDB ##
+#######################
+
+def update_data(partsid, totalemissions, emissions, peer):
+    SQL = sql.SQL("""
+            UPDATE offchaindb_co2emissions set (totalemissions, emissions) VALUES ({TotalEMISSIONS}, {EMISSIONS})
+            WHERE partsid = {PartsID} ;
         """).format(
             PartsID = sql.Literal(partsid),
             TotalEMISSIONS = sql.Literal(totalemissions),
@@ -96,7 +113,7 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
     
     if peer[8:] == 'A':
         net = IrohaGrpc('192.168.32.2:50051')
-    else if peer[8:] == 'B':
+    elif peer[8:] == 'B':
         net = IrohaGrpc('192.168.32.3:50051')
     else :
         net = IrohaGrpc('192.168.32.4:50051')
@@ -120,7 +137,7 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
     if status[0] == 'COMMITTED':
         totalemissions =  get_TotalEMISSIONS(partsid, peer, db = 'wsv')
         datalink = get_DataLink(partsid, peer)
-        insert_data(partsid, totalemissions, emissions, datalink)
+        update_data(partsid, totalemissions, emissions, datalink)
         return
 
     else:
@@ -134,5 +151,5 @@ if __name__ == '__main__':
     emissions = '10001.0'
     sumchildemissions = '12345.0'
 
-    #insert_data(partsid, totalemissions, emissions)
+    #update_data(partsid, totalemissions, emissions)
     #IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, 'admin@test')

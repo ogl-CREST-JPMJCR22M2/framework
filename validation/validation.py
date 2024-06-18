@@ -52,7 +52,7 @@ def calculate_totalemissions(partsid, peer):
     emissions = common.get_TotalEMISSIONS(partsid, datalink, 'wsv')   # get and sum child_totalEmission
 
     if not childpartsid :
-        common.IROHA_COMMANDexecutor(partsid, emissions, 0.0, peer, 'admin@test') # recalculating with command
+        common.IROHA_COMMANDexecutor(partsid, emissions, '0.0', peer, 'admin@test') # recalculating with command
         return common.get_TotalEMISSIONS(partsid, datalink, 'wsv')
 
     else :
