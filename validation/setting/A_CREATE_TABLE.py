@@ -6,7 +6,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 dsn = {
     "dbname": "offchaindb",
     "user": "postgres",
-    "password": "postgres",
+    "password": "mysecretpassword",
     "port": "5432",
     "host": "postgresA",
 }

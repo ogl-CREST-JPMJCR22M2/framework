@@ -6,9 +6,9 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 dsn = {
     "dbname": "postgres",
     "user": "postgres",
-    "password": "postgres",
+    "password": "mysecretpassword",
     "port": "5432",
-    "host": "localhost",
+    "host": "postgresA",
 }
 
 conn: Optional[connection] = None
