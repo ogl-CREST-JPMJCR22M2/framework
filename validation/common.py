@@ -3,7 +3,6 @@ from psycopg2 import sql
 import SQLexecutor as SQLexe
 
 iroha = Iroha('admin@test')
-net = IrohaGrpc('localhost:50051')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
 
@@ -15,7 +14,7 @@ def insert_data(partsid, totalemissions, emissions, peer):
     SQL = sql.SQL("""
             INSERT INTO offchaindb_co2emissions (partsid, totalemissions, emissions) VALUES ({PartsID}, {TotalEMISSIONS}, {EMISSIONS})
             ON CONFLICT (partsid)
-            DO UPDATE SET totalemissions = {TotalEMISSIONS}, emissions = {EMISSIONS};
+            DO UPDATE SET totalemissions = {TotalEMISSIONS}, emissions = {EMISSIONS} WHERE partsid = {PartsID};
         """).format(
             PartsID = sql.Literal(partsid),
             TotalEMISSIONS = sql.Literal(totalemissions),
@@ -94,6 +93,13 @@ def get_ChlidParts(partsid, peer): #peer:executing peer(account)
 #######################
 
 def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid = 'admin@test'): #peer:executing peer(account)
+    
+    if peer[8:] == 'A':
+        net = IrohaGrpc('192.168.32.2:50051')
+    else if peer[8:] == 'B':
+        net = IrohaGrpc('192.168.32.3:50051')
+    else :
+        net = IrohaGrpc('192.168.32.4:50051')
 
     tx = iroha.transaction(
         [iroha.command(

@@ -13,7 +13,7 @@ def QUERYexecutor(SQL, peer, db = 'off'):
             "user": "postgres",
             "password": "mysecretpassword",
             "port": "5432",
-            "host": 'postgres'+peer
+            "host": peer
         }
 
         conn = connect(**dsn)
@@ -39,7 +39,7 @@ def COMMANDexecutor(SQL, peer, db = 'off'):
             "user": "postgres",
             "password": "mysecretpassword",
             "port": "5432",
-            "host": 'postgres'+peer
+            "host": peer
         }
         conn = connect(**dsn)
         conn.autocommit = True
