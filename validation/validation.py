@@ -47,10 +47,10 @@ def quickly_validation(partsid, peer):
 ########################################################
 
 def calculate_totalemissions(partsid, peer):
-    datalink = get_DataLink(partsid, peer)
+    datalink = common.get_DataLink(partsid, peer)
     childpartsid = common.get_ChlidParts(partsid, peer)
-    emissions = common.get_TotalEMISSIONS(partsid, datalink, 'wsv')   # child_totalEmissionの取得と合計
-    
+    emissions = common.get_TotalEMISSIONS(partsid, datalink, 'wsv')   # get and sum child_totalEmission
+
     if not childpartsid :
         common.IROHA_COMMANDexecutor(partsid, emissions, 0.0, peer, 'admin@test') # recalculating with command
         return common.get_TotalEMISSIONS(partsid, datalink, 'wsv')
@@ -58,7 +58,7 @@ def calculate_totalemissions(partsid, peer):
     else :
         data =  0
         for i in range(len(childpartsid)):
-            data += calculate_totalemissions(childpartsid[i], get_DataLink(childpartsid[i], peer))
+            data += calculate_totalemissions(childpartsid[i], common.get_DataLink(childpartsid[i], peer))
     
         common.IROHA_COMMANDexecutor(partsid, emissions, data, peer, 'admin@test') # recalculating with command
         return data
@@ -69,15 +69,11 @@ def calculate_totalemissions(partsid, peer):
 ###################################
 
 def original_validatioin(partsid, peer):
-    offdb_value = common.get_TotalEMISSIONS(partsid, peer, 'off') # 比較元:offchainDB上の値
+    offdb_value = common.get_TotalEMISSIONS(partsid, peer, 'off') # Comparison source : values in offchainDB
     calculate_totalemissions(partsid, peer)
 
     #validation
-<<<<<<< HEAD
     wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv')
-=======
-    wsv_value = common.get_TotalEMISSIONS(partsid, 'wsv', peer)
->>>>>>> 37791a45f061fb2e68cf26e082c2e9604fa69fba
     
     if wsv_value != offdb_value:
         print("Validation Failed")
@@ -87,5 +83,5 @@ def original_validatioin(partsid, peer):
 
 if __name__ == '__main__':
 
-    #quickly_calculate_totalemissions('P01001', get_DataLink('P01001', 'PeerA'))
-    print(get_DataLink('P01001', 'PeerA'))
+    #quickly_calculate_totalemissions('P01001', common.get_DataLink('P01001', 'A'))
+    print(common.get_DataLink('P01001', 'A'))

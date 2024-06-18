@@ -2,27 +2,7 @@ from typing import Optional
 from psycopg2 import connect, sql
 from psycopg2._psycopg import connection, cursor
 
-"""dsn = {
-        "dbname": "offchaindb",
-        "user": "postgres",
-        "password": "mysecretpassword",
-        "port": "5432",
-        "host": "postgres",
-}
-
-dsn_wsv = {
-        "dbname": "iroha_default",
-        "user": "postgres",
-        "password": "mysecretpassword",
-        "port": "5432",
-        "host": "localhost",
-}"""
-
-<<<<<<< HEAD
 def QUERYexecutor(SQL, peer, db = 'off'):
-=======
-def QUERYexecutor(SQL,  peer, db = 'off'):
->>>>>>> 37791a45f061fb2e68cf26e082c2e9604fa69fba
     conn: Optional[connection] = None
     try:
         if db == 'wsv': dbname = 'iroha_default'
@@ -33,7 +13,7 @@ def QUERYexecutor(SQL,  peer, db = 'off'):
             "user": "postgres",
             "password": "mysecretpassword",
             "port": "5432",
-            "host": get_EMISSIONS(partsid)[4:],
+            "host": 'postgres'+peer
         }
 
         conn = connect(**dsn)
@@ -59,7 +39,7 @@ def COMMANDexecutor(SQL, peer, db = 'off'):
             "user": "postgres",
             "password": "mysecretpassword",
             "port": "5432",
-            "host": get_EMISSIONS(partsid)[4:],
+            "host": 'postgres'+peer
         }
         conn = connect(**dsn)
         conn.autocommit = True

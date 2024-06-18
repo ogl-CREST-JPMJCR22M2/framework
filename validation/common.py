@@ -25,15 +25,30 @@ def insert_data(partsid, totalemissions, emissions, peer):
     SQLexe.COMMANDexecutor(SQL, peer, 'off')
 
 
+###########################
+## Get DataLink from wsv ##
+###########################
+
+def get_DataLink(partsid, peer):  #peer:executing peer(account)
+
+    SQL = sql.SQL("""
+            SELECT DataLink FROM Partsinfo WHERE partsid = {PartsID};
+        """).format(
+            PartsID = sql.Literal(partsid)
+        )
+    return SQLexe.QUERYexecutor(SQL, peer, 'wsv')[0][0]
+    
+
 ###############################################
 ## Get TotalEMISSIONS from offchainDB or WSV ##
 ###############################################
 
-def get_TotalEMISSIONS(partsid, peer, db = 'off'):
-    tablename = 'offchaindb_co2emissions'
+def get_TotalEMISSIONS(partsid, peer, db = 'wsv'): 
+    tablename = 'co2emissions'
 
-    if db == 'wsv':
-        tablename = 'co2emissions'
+    if db == 'off':
+        tablename = 'offchaindb_co2emissions'
+        peer = get_DataLink(partsid, peer)
 
     SQL = sql.SQL("""
             SELECT totalemissions FROM {TABLEname} WHERE partsid = {PartsID};
@@ -49,14 +64,15 @@ def get_TotalEMISSIONS(partsid, peer, db = 'off'):
 ## Get EMISSIONS from offchainDB ##
 ###################################
 
-def get_EMISSIONS(partsid, peer):
+def get_EMISSIONS(partsid, peer): #peer:executing peer(account)
 
     SQL = sql.SQL("""
             SELECT emissions FROM offchaindb_co2emissions WHERE partsid = {PartsID};
         """).format(
             PartsID = sql.Literal(partsid)
         )
-    return SQLexe.QUERYexecutor(SQL, peer, db)[0][0]
+    datalink = get_DataLink(partsid, peer)
+    return SQLexe.QUERYexecutor(SQL, datalink, 'off')[0][0]
 
 
 ################################
@@ -73,25 +89,12 @@ def get_ChlidParts(partsid, peer): #peer:executing peer(account)
     return SQLexe.QUERYexecutor(SQL, peer, 'wsv')[0][0]
 
 
-###########################
-## Get DataLink from wsv ##
-###########################
-
-def get_DataLink(partsid, peer):  #peer:executing peer(account)
-
-    SQL = sql.SQL("""
-            SELECT DataLink FROM Partsinfo WHERE partsid = {PartsID};
-        """).format(
-            PartsID = sql.Literal(partsid)
-        )
-    return SQLexe.QUERYexecutor(SQL, peer, 'wsv')[0][0]
-
-
 #######################
 ## Run iroha command ##
 #######################
 
-def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid = 'admin@test'):
+def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid = 'admin@test'): #peer:executing peer(account)
+
     tx = iroha.transaction(
         [iroha.command(
             'SetAccountDetail',
