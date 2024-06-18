@@ -117,6 +117,10 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
         net = IrohaGrpc('192.168.32.3:50051')
     else :
         net = IrohaGrpc('192.168.32.4:50051')
+    
+    if sumchildemissions == '0.0':
+        sumchildemissions = emissions/2
+        emissions = emissions/2
 
     tx = iroha.transaction(
         [iroha.command(
