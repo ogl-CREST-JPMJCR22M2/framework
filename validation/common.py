@@ -30,7 +30,7 @@ def upsert_data(partsid, totalemissions, emissions, peer):
 
 def update_data(partsid, totalemissions, emissions, peer):
     SQL = sql.SQL("""
-            UPDATE offchaindb_co2emissions set (totalemissions, emissions) VALUES ({TotalEMISSIONS}, {EMISSIONS})
+            UPDATE offchaindb_co2emissions set totalemissions = {TotalEMISSIONS}, emissions = {EMISSIONS} 
             WHERE partsid = {PartsID} ;
         """).format(
             PartsID = sql.Literal(partsid),
@@ -119,8 +119,8 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
         net = IrohaGrpc('192.168.32.4:50051')
     
     if sumchildemissions == '0.0':
-        sumchildemissions = emissions/2
-        emissions = emissions/2
+        sumchildemissions = str(float(emissions)/2)
+        emissions = str(float(emissions)/2)
 
     tx = iroha.transaction(
         [iroha.command(
@@ -141,7 +141,7 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
     if status[0] == 'COMMITTED':
         totalemissions =  get_TotalEMISSIONS(partsid, peer, db = 'wsv')
         datalink = get_DataLink(partsid, peer)
-        update_data(partsid, totalemissions, emissions, datalink)
+        update_data(partsid, totalemissions, str(float(emissions)*2), datalink)
         return
 
     else:
