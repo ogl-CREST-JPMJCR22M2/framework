@@ -88,7 +88,7 @@ def get_EMISSIONS(partsid, peer): #peer:executing peer(account)
             PartsID = sql.Literal(partsid)
         )
     datalink = get_DataLink(partsid, peer)
-    return SQLexe.QUERYexecutor(SQL, datalink, 'off')[0][0]
+    return str(SQLexe.QUERYexecutor(SQL, datalink, 'off')[0][0])
 
 
 ################################
@@ -122,6 +122,8 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
         sumchildemissions = str(float(emissions)/2)
         emissions = str(float(emissions)/2)
         zeroflag = True
+    else :
+        zeroflag = False
 
     tx = iroha.transaction(
         [iroha.command(

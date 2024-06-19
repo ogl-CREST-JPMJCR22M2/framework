@@ -1,10 +1,12 @@
 import common
+import time
 
 def original_calcu(partsid, peer, emissions):
     child_totalEmission = common.calcu_child_totalemissions(partsid, peer)
     common.IROHA_COMMANDexecutor(partsid, emissions, child_totalEmission, peer, 'admin@test') # recalculating with command
 
 if __name__ == '__main__':
+    start = time.time() 
     ## C ##
     #original_calcu('P04014', 'postgresC', '1.0')
     #original_calcu('P04015', 'postgresC', '1.1')
@@ -40,3 +42,8 @@ if __name__ == '__main__':
     #original_calcu('P02003', 'postgresA', '1.1')
     #original_calcu('P02004', 'postgresA', '1.2')
     #original_calcu('P02001', 'postgresA', '1.0')
+    
+    end = time.time()
+
+    time_diff = end - start
+    print(time_diff) 
