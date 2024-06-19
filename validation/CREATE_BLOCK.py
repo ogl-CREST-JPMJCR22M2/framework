@@ -1,7 +1,7 @@
 import common
 
 def original_calcu(partsid, peer, emissions):
-    child_totalEmission = calcu_child_totalemissions(partsid, peer)
+    child_totalEmission = common.calcu_child_totalemissions(partsid, peer)
     common.IROHA_COMMANDexecutor(partsid, emissions, child_totalEmission, peer, 'admin@test') # recalculating with command
 
 if __name__ == '__main__':

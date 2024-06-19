@@ -121,6 +121,7 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
     if sumchildemissions == '0.0':
         sumchildemissions = str(float(emissions)/2)
         emissions = str(float(emissions)/2)
+        zeroflag = True
 
     tx = iroha.transaction(
         [iroha.command(
@@ -141,33 +142,13 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
     if status[0] == 'COMMITTED':
         totalemissions =  get_TotalEMISSIONS(partsid, peer, db = 'wsv')
         datalink = get_DataLink(partsid, peer)
-        update_data(partsid, totalemissions, str(float(emissions)*2), datalink)
+        if not zeroflag:
+            update_data(partsid, totalemissions, emissions, datalink)
+        else :
+            update_data(partsid, totalemissions, str(float(emissions)*2), datalink)
         return
-
     else:
         return
-
-
-########################################################
-## calculating TotalEmissions by recursive processing ##
-########################################################
-
-def calcu_totalemissions(partsid, peer):
-    datalink = get_DataLink(partsid, peer)
-    childpartsid = get_ChlidParts(partsid, peer)
-    emissions = get_TotalEMISSIONS(partsid, peer, 'wsv')   # get and sum child_totalEmissions
-
-    if not childpartsid :
-        IROHA_COMMANDexecutor(partsid, emissions, '0.0', peer, 'admin@test') # recalculating with command
-        return get_TotalEMISSIONS(partsid, datalink, 'wsv')
-
-    else :
-        data =  0
-        for i in range(len(childpartsid)):
-            data += calculate_totalemissions(childpartsid[i], get_DataLink(childpartsid[i], peer))
-    
-        IROHA_COMMANDexecutor(partsid, emissions, data, peer, 'admin@test') # recalculating with command
-        return data
 
 
 ##############################################################
@@ -182,14 +163,14 @@ def calcu_child_totalemissions(partsid, peer):
     else :
         data =  0
         for i in range(len(childpartsid)):
-            datalink = get_DataLink(childpartsid[i])
+            datalink = get_DataLink(childpartsid[i], peer)
             child_totalEmissions = calcu_child_totalemissions(childpartsid[i], datalink)
             emissions = get_EMISSIONS(childpartsid[i], datalink)
 
             IROHA_COMMANDexecutor(childpartsid[i], emissions, child_totalEmissions, datalink, 'admin@test') 
             data += get_TotalEMISSIONS(childpartsid[i], datalink, 'wsv')
     
-    return data
+    return str(data)
 
 
 
