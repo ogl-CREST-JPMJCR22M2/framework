@@ -42,35 +42,17 @@ def quickly_validation(partsid, peer):
         print("Validation Successful")
         
 
-########################################################
-## calculating TotalEmissions by recursive processing ##
-########################################################
-
-def calculate_totalemissions(partsid, peer):
-    datalink = common.get_DataLink(partsid, peer)
-    childpartsid = common.get_ChlidParts(partsid, peer)
-    emissions = common.get_TotalEMISSIONS(partsid, datalink, 'wsv')   # get and sum child_totalEmission
-
-    if not childpartsid :
-        common.IROHA_COMMANDexecutor(partsid, emissions, '0.0', peer, 'admin@test') # recalculating with command
-        return common.get_TotalEMISSIONS(partsid, datalink, 'wsv')
-
-    else :
-        data =  0
-        for i in range(len(childpartsid)):
-            data += calculate_totalemissions(childpartsid[i], common.get_DataLink(childpartsid[i], peer))
-    
-        common.IROHA_COMMANDexecutor(partsid, emissions, data, peer, 'admin@test') # recalculating with command
-        return data
-
-
 ###################################
 ## validation without WSV values ##
 ###################################
 
 def original_validatioin(partsid, peer):
     offdb_value = common.get_TotalEMISSIONS(partsid, peer, 'off') # Comparison source : values in offchainDB
-    calculate_totalemissions(partsid, peer)
+
+    # calculating TotalEmissions
+    child_totalEmission = common.calcu_totalemissions(partsid, peer)
+    emissions = common.get_TotalEMISSIONS(partsid, peer, 'wsv') # get and sum child_totalEmission
+    common.IROHA_COMMANDexecutor(partsid, emissions, child_totalEmission, peer, 'admin@test')
 
     #validation
     wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv')

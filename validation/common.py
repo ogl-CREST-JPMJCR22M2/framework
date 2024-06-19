@@ -148,6 +148,51 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
         return
 
 
+########################################################
+## calculating TotalEmissions by recursive processing ##
+########################################################
+
+def calcu_totalemissions(partsid, peer):
+    datalink = get_DataLink(partsid, peer)
+    childpartsid = get_ChlidParts(partsid, peer)
+    emissions = get_TotalEMISSIONS(partsid, peer, 'wsv')   # get and sum child_totalEmissions
+
+    if not childpartsid :
+        IROHA_COMMANDexecutor(partsid, emissions, '0.0', peer, 'admin@test') # recalculating with command
+        return get_TotalEMISSIONS(partsid, datalink, 'wsv')
+
+    else :
+        data =  0
+        for i in range(len(childpartsid)):
+            data += calculate_totalemissions(childpartsid[i], get_DataLink(childpartsid[i], peer))
+    
+        IROHA_COMMANDexecutor(partsid, emissions, data, peer, 'admin@test') # recalculating with command
+        return data
+
+
+##############################################################
+## calculating child_TotalEmissions by recursive processing ##
+##############################################################
+
+def calcu_child_totalemissions(partsid, peer):
+    childpartsid = get_ChlidParts(partsid, peer)
+
+    if not childpartsid :
+        return '0.0'
+    else :
+        data =  0
+        for i in range(len(childpartsid)):
+            datalink = get_DataLink(childpartsid[i])
+            child_totalEmissions = calcu_child_totalemissions(childpartsid[i], datalink)
+            emissions = get_EMISSIONS(childpartsid[i], datalink)
+
+            IROHA_COMMANDexecutor(childpartsid[i], emissions, child_totalEmissions, datalink, 'admin@test') 
+            data += get_TotalEMISSIONS(childpartsid[i], datalink, 'wsv')
+    
+    return data
+
+
+
 if __name__ == '__main__':
 
     partsid = 'n02001'
