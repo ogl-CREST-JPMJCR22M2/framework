@@ -41,7 +41,7 @@ if __name__ == '__main__':
     #original_calcu('P02002', 'postgresA', '1.0')
     #original_calcu('P02003', 'postgresA', '1.1')
     #original_calcu('P02004', 'postgresA', '1.2')
-    #original_calcu('P02001', 'postgresA', '1.0')
+    #original_calcu('P01001', 'postgresA', '1.0')
     
     end = time.time()
 

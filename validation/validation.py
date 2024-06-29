@@ -10,7 +10,7 @@ def more_quickly_validation(partsid, peer):
     wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv') # Comparison destination : values in WSV
     offdb_value = common.get_TotalEMISSIONS(partsid, peer, 'off') # Comparison source : values in offchainDB
 
-    if wsv_value != offdb_value:
+    if float(wsv_value) != float(offdb_value):
         print("Validation Failed")
     else :
         print("Validation Successful")
@@ -36,7 +36,7 @@ def quickly_validation(partsid, peer):
     #validation
     wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv')
     
-    if wsv_value != offdb_value:
+    if float(wsv_value) != float(offdb_value):
         print("Validation Failed")
     else :
         print("Validation Successful")
@@ -57,7 +57,7 @@ def original_validatioin(partsid, peer):
     #validation
     wsv_value = common.get_TotalEMISSIONS(partsid, peer, 'wsv')
     
-    if wsv_value != offdb_value:
+    if float(wsv_value) != float(offdb_value):
         print("Validation Failed")
     else :
         print("Validation Successful")
