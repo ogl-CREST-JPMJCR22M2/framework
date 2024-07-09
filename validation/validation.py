@@ -63,6 +63,25 @@ def original_validatioin(partsid, peer):
         print("Validation Successful")
 
 
+############################################################################
+## quickly validation using child_parts in WSV values and once connection ##
+############################################################################
+
+
+def
+    SQL = sql.SQL("""
+            SELECT 
+            FOREACH i IN ARRAY (SELECT childpartsid FROM co2emissions WHERE partsid = {PartsID})
+            LOOP
+                RAISE INFO '%', i;
+        """).format(
+            PartsID = sql.Literal(partsid)
+        )
+
+    return QUERYexecutor(SQL)[0][0]
+
+
+
 if __name__ == '__main__':
 
     #quickly_calculate_totalemissions('P01001', common.get_DataLink('P01001', 'A'))

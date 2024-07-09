@@ -58,6 +58,21 @@ def quickly_calculate_totalemissions(partsid):
         return data
 
 
+### コマンドの呼び出しを再帰なしで書く
+
+def non_recursion(partsid):
+    childpartsid = get_ChlidParts(partsid)
+    datalink = get_DataLink(partsid, peer)
+    emissions = get_EMISSIONS(partsid, datalink)
+
+    if not childpartsid :
+        return IROHA_COMMANDexecutor(partsid, emissions, '0.0', datalink, 'admin@test')
+    else : 
+        return data + 
+
+    
+    
+
 
 if __name__ == '__main__':
 

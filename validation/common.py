@@ -148,9 +148,9 @@ def IROHA_COMMANDexecutor(partsid, emissions, sumchildemissions, peer, accountid
             update_data(partsid, totalemissions, emissions, datalink)
         else :
             update_data(partsid, totalemissions, str(float(emissions)*2), datalink)
-        return
+        return get_TotalEMISSIONS(partsid, datalink, 'wsv')
     else:
-        return
+        return False
 
 
 ##############################################################
@@ -169,10 +169,10 @@ def calcu_child_totalemissions(partsid, peer):
             child_totalEmissions = calcu_child_totalemissions(childpartsid[i], datalink)
             emissions = get_EMISSIONS(childpartsid[i], datalink)
 
-            IROHA_COMMANDexecutor(childpartsid[i], emissions, child_totalEmissions, datalink, 'admin@test') 
-            data += get_TotalEMISSIONS(childpartsid[i], datalink, 'wsv')
-    
+            data += IROHA_COMMANDexecutor(childpartsid[i], emissions, child_totalEmissions, datalink, 'admin@test') 
+            
     return str(data)
+
 
 
 
