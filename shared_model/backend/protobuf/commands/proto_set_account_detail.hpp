@@ -21,15 +21,8 @@ namespace shared_model {
 
       const interface::types::PartsIdType &partsId() const override;
 
-      const interface::Emissions &newEmissions() const override;
-
-      const interface::Emissions &sumChildEmissions() const override;
-
      private:
       const iroha::protocol::SetAccountDetail &set_account_detail_;
-
-      const interface::Emissions newemissions_;
-      const interface::Emissions sumchildemissions_;
     };
 
   }  // namespace proto

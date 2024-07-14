@@ -15,21 +15,15 @@ namespace iroha {
     struct SetAccountDetail : public Command {
       std::string account_id;
       std::string parts_id;
-      std::string new_emissions;
-      std::string sum_child_emissions;
 
       bool operator==(const Command &command) const override;
 
       SetAccountDetail() {}
 
       SetAccountDetail(const std::string &account_id,
-                       const std::string &parts_id,
-                       const std::string &new_emissions,
-                       const std::string &sum_child_emissions)
+                       const std::string &parts_id)
           : account_id(account_id), 
-          parts_id(parts_id), 
-          new_emissions(new_emissions), 
-          sum_child_emissions(sum_child_emissions) {}
+          parts_id(parts_id) {}
     };
 
   }  // namespace model

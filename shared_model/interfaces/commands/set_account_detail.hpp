@@ -29,16 +29,6 @@ namespace shared_model {
        */
       virtual const types::PartsIdType &partsId() const = 0;
 
-      /**
-       * @return new emissions
-       */
-      virtual const Emissions &newEmissions() const = 0;
-      
-      /**
-       * @return sum child emissions
-       */
-      virtual const Emissions &sumChildEmissions() const = 0;
-
       std::string toString() const override;
 
       bool operator==(const ModelType &rhs) const override;

@@ -297,15 +297,11 @@ namespace shared_model {
 
       auto setAccountDetail(
           const interface::types::AccountIdType &account_id,
-          const interface::types::PartsIdType &parts_id,
-          const std::string &new_emissions,
-          const std::string &sum_child_emissions) const {
+          const interface::types::PartsIdType &parts_id) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_set_account_detail();
           command->set_account_id(account_id);
           command->set_parts_id(parts_id);
-          command->set_new_emissions(new_emissions);
-          command->set_sum_child_emissions(sum_child_emissions);
         });
       }
 

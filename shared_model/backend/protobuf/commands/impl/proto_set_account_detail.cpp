@@ -9,9 +9,7 @@ namespace shared_model {
   namespace proto {
 
     SetAccountDetail::SetAccountDetail(iroha::protocol::Command &command)
-        : set_account_detail_{command.set_account_detail()},
-          newemissions_{set_account_detail_.new_emissions()},
-          sumchildemissions_{set_account_detail_.sum_child_emissions()} {}
+        : set_account_detail_{command.set_account_detail()}{}
 
     const interface::types::AccountIdType &SetAccountDetail::accountId() const {
       return set_account_detail_.account_id();
@@ -21,16 +19,5 @@ namespace shared_model {
         const {
       return set_account_detail_.parts_id();
     }
-
-    const interface::Emissions &SetAccountDetail::newEmissions()
-        const {
-      return newemissions_;
-    }
-
-    const interface::Emissions &SetAccountDetail::sumChildEmissions()
-        const {
-      return sumchildemissions_;
-    }
-
   }  // namespace proto
 }  // namespace shared_model

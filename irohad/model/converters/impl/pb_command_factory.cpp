@@ -452,8 +452,6 @@ namespace iroha {
         protocol::SetAccountDetail cmd;
         cmd.set_account_id(command.account_id);
         cmd.set_parts_id(command.parts_id);
-        cmd.set_new_emissions(command.new_emissions);
-        cmd.set_sum_child_emissions(command.sum_child_emissions);
         return cmd;
       }
 
@@ -462,8 +460,6 @@ namespace iroha {
         model::SetAccountDetail setAccountDetail;
         setAccountDetail.account_id = command.account_id();
         setAccountDetail.parts_id = command.parts_id();
-        setAccountDetail.new_emissions = command.new_emissions();
-        setAccountDetail.sum_child_emissions = command.sum_child_emissions();
         return setAccountDetail;
       }
 

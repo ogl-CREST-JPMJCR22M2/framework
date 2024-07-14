@@ -62,9 +62,7 @@ public:
             const GrantablePermission permission);
     std::shared_ptr<Command> generateSetAccountDetail(
             const std::string& account_id,
-            const std::string& part_id,
-            const std::string& new_emissions,
-            const std::string& sum_child_emissions;
+            const std::string& parts_id;
     std::shared_ptr<Command> generateSetAccountQuorum(
             const std::string& account_id, uint32_t quorum);
     std::shared_ptr<Command> generateSubtractAssetQuantity(
