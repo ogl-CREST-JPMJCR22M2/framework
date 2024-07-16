@@ -1163,12 +1163,17 @@ namespace iroha {
       set_account_detail_statements_ = makeCommandStatements(
           sql_,
           R"(
+          SELECT dblink_connetct('connA','host=postgresA port=5432 dbname=offchainDB user=postgres password=mysecretpassword');
+
+          CREATE VIEW postgresA as 
+          SELECT *
+          FROM dblink('connA', 'SELECT PartsID, EMISSIONS from offchainDB_CO2EMISSIONS')
+          AS t1(PartsID CHARACTER varying(288), EMISSIONS DECIMAL);
+
           WITH %s
             new_quantity AS
              (
-                 SELECT :new_emissions::decimal as newEmissions,
-                    :sum_child_emissions::decimal as sumChildEmissions,
-			              :new_emissions::decimal + :sum_child_emissions::decimal as value
+                 SELECT *
                  FROM CO2Emissions
                  WHERE PartsID=:partsid 
              ),
@@ -1178,32 +1183,10 @@ namespace iroha {
                 SELECT 3 code, count(1) = 1 result
                 FROM CO2Emissions
                 WHERE PartsID = :partsid
-
-                -- check value of new_emissions
-                UNION
-                SELECT 4, newEmissions >= 0
-                FROM new_quantity
-
-		-- check value of new_emissions
-                UNION
-                SELECT 5, newEmissions < 1000
-                FROM new_quantity
-		
-		-- check value of sum_child_emissions
-                UNION
-                SELECT 6, sumChildEmissions >= 0
-                FROM new_quantity
-
-                -- dest value overflow
-                UNION
-                SELECT 7, value < (2::decimal ^ 256) / (10::decimal ^ 10)
-                FROM new_quantity
-
             ),
 	    inserted AS
             (
-                UPDATE CO2Emissions SET TotalEMISSIONS = 
-                	( SELECT value FROM new_quantity )
+                UPDATE CO2Emissions SET TotalEMISSIONS = '100.0'
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
                 RETURNING (1)
@@ -1945,8 +1928,6 @@ namespace iroha {
         bool do_validation) {
       auto &account_id = command.accountId();
       auto &parts_id = command.partsId();
-      auto new_emissions = command.newEmissions().toStringRepr();
-      auto sum_child_emissions = command.sumChildEmissions().toStringRepr();
 
       StatementExecutor executor(set_account_detail_statements_,
                                  do_validation,
@@ -1961,8 +1942,6 @@ namespace iroha {
       }
       executor.use("target", account_id);
       executor.use("partsid", parts_id);
-      executor.use("new_emissions", new_emissions);
-      executor.use("sum_child_emissions", sum_child_emissions);
 
       return executor.execute();
     }

@@ -263,6 +263,8 @@ CREATE TABLE CO2Emissions (
     PRIMARY KEY (PartsID)
 );
 
+CREATE extension dblink;
+
 INSERT INTO CO2Emissions VALUES
 	('P01001', '0.0'), 
 	('P02002', '0.0'),
