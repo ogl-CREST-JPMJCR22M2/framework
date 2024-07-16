@@ -1163,14 +1163,21 @@ namespace iroha {
       set_account_detail_statements_ = makeCommandStatements(
           sql_,
           R"(
-          SELECT dblink_connetct('connA','host=postgresA port=5432 dbname=offchainDB user=postgres password=mysecretpassword');
-
+          
           CREATE VIEW postgresA as 
-          SELECT *
-          FROM dblink('connA', 'SELECT PartsID, EMISSIONS from offchainDB_CO2EMISSIONS')
-          AS t1(PartsID CHARACTER varying(288), EMISSIONS DECIMAL);
+          
 
           WITH %s
+            connections AS
+            (
+                SELECT dblink_connetct('connA','host=postgresA port=5432 dbname=offchainDB user=postgres password=mysecretpassword')
+            ),
+            table AS
+            (
+                SELECT *
+                FROM dblink('connA', 'SELECT PartsID, EMISSIONS from offchainDB_CO2EMISSIONS')
+                AS t1(PartsID CHARACTER varying(288), EMISSIONS DECIMAL)
+            )
             new_quantity AS
              (
                  SELECT *
