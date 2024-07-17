@@ -1168,15 +1168,11 @@ namespace iroha {
           
 
           WITH %s
-            connections AS
-            (
-                SELECT dblink_connetct('connA','host=postgresA port=5432 dbname=offchainDB user=postgres password=mysecretpassword')
-            ),
             import_table AS
             (
                 SELECT *
-                FROM dblink('connA', 'SELECT PartsID, EMISSIONS from offchainDB_CO2EMISSIONS')
-                AS t1(PartsID CHARACTER varying(288), EMISSIONS DECIMAL)
+                FROM dblink('host=postgresA port=5432 dbname=offchainDB user=postgres password=mysecretpassword', 'SELECT PartsID, EMISSIONS from offchainDB_CO2EMISSIONS')
+                AS t(PartsID CHARACTER varying(288), EMISSIONS DECIMAL)
             ),
             new_quantity AS
              (
