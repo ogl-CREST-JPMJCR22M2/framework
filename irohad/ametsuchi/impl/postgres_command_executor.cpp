@@ -1164,17 +1164,28 @@ namespace iroha {
           sql_,
           R"(
           WITH %s
-            import_tableA AS
+            import_table AS
             (
                 select * from dblink(
                     'host=postgresA port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
+                    'select partsid, emissions from offchaindb_co2emissions') 
+                    as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+
+                union
+                select * from dblink(
+                    'host=postgresB port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
+                    'select partsid, emissions from offchaindb_co2emissions') 
+                    as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+                union
+                select * from dblink(
+                    'host=postgresC port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
                     'select partsid, emissions from offchaindb_co2emissions') 
                     as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
             ),
             new_quantity AS
              (
                  SELECT emissions
-                 FROM import_tableA
+                 FROM import_table
                  WHERE PartsID=:partsid 
              ),
             checks AS -- error code and check result
