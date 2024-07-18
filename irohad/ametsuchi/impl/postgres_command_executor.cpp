@@ -1175,12 +1175,6 @@ namespace iroha {
                     'select partsid, emissions from offchaindb_co2emissions') 
                     as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
             ),
-            new_quantity AS
-             (
-                 SELECT emissions
-                 FROM import_tableA
-                 WHERE PartsID=:partsid 
-             ),
             checks AS -- error code and check result
             (
                 -- source account exists
@@ -1192,7 +1186,7 @@ namespace iroha {
             (
                 UPDATE CO2Emissions SET TotalEMISSIONS = 
                 (
-                  SELECT emissions from new_quantity
+                  SELECT EMISSIONS from import_tableA WHERE PartsID=:partsid
                 )
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
