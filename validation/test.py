@@ -77,11 +77,13 @@ if __name__ == '__main__':
                 ),
                 update_table AS
                 (
-                    update co2emissions set emissions = 1.1
+                    update co2emissions set emissions =
+                         (select emissions from union_tableAB where partsid = 'P01001')
                     where partsid = 'P01001'
-                    returning *
+                    
+                    RETURNING (1)
                 )
                 select emissions from union_tableAB where partsid = 'P01001'
         """
 
-    QUERYexecutor(SQL)
+    COMMANDexecutor(SQL)

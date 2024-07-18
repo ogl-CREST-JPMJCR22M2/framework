@@ -1168,16 +1168,17 @@ namespace iroha {
           
 
           WITH %s
-            import_table AS
+            import_tableA AS
             (
-                SELECT *
-                FROM dblink('host=postgresA port=5432 dbname=offchainDB user=postgres password=mysecretpassword', 'SELECT PartsID, EMISSIONS from offchainDB_CO2EMISSIONS')
-                AS t(PartsID CHARACTER varying(288), EMISSIONS DECIMAL)
+                select * from dblink(
+                    'host=postgresA port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
+                    'select partsid, emissions from offchaindb_co2emissions') 
+                    as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
             ),
             new_quantity AS
              (
-                 SELECT *
-                 FROM CO2Emissions
+                 SELECT emissions
+                 FROM import_tableA
                  WHERE PartsID=:partsid 
              ),
             checks AS -- error code and check result
@@ -1191,7 +1192,7 @@ namespace iroha {
             (
                 UPDATE CO2Emissions SET TotalEMISSIONS = 
                 (
-                  SELECT EMISSIONS FROM import_table WHERE PartsID=:partsid
+                  SELECT emissions from new_quantity
                 )
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
