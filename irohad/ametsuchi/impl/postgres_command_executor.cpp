@@ -1163,10 +1163,6 @@ namespace iroha {
       set_account_detail_statements_ = makeCommandStatements(
           sql_,
           R"(
-          
-          CREATE VIEW postgresA as 
-          
-
           WITH %s
             import_tableA AS
             (
@@ -1175,6 +1171,12 @@ namespace iroha {
                     'select partsid, emissions from offchaindb_co2emissions') 
                     as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
             ),
+            new_quantity AS
+             (
+                 SELECT emissions
+                 FROM import_tableA
+                 WHERE PartsID=:partsid 
+             ),
             checks AS -- error code and check result
             (
                 -- source account exists
@@ -1186,7 +1188,7 @@ namespace iroha {
             (
                 UPDATE CO2Emissions SET TotalEMISSIONS = 
                 (
-                  SELECT EMISSIONS from import_tableA WHERE PartsID=:partsid
+                  SELECT emissions from new_quantity 
                 )
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
