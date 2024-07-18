@@ -34,5 +34,5 @@ def IROHA_COMMANDexecutor(partsid, peer): #peer:executing peer(account)
 if __name__ == '__main__':
 
     partsid = 'P01001'
-    IROHA_COMMANDexecutor(partsid, 'peerA')
+    IROHA_COMMANDexecutor(partsid, 'postgresA')
     
