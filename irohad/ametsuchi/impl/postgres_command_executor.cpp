@@ -1162,7 +1162,7 @@ namespace iroha {
 
       set_account_detail_statements_ = makeCommandStatements(
           sql_,
-          "
+          R"(
           WITH %s
             import_tableA AS
             (
