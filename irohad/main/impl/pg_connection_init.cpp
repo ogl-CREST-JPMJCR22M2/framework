@@ -300,8 +300,8 @@ INSERT INTO CO2Emissions VALUES
   CREATE TABLE Partsinfo (
     PartsID CHARACTER varying(288) NOT NULL,
     DataLink CHARACTER varying(288) NOT NULL,
-    Parents_PartsID CHARACTER varying(288) NOT NULL,
-    PRIMARY KEY (PartsID, Parents_PartsID)
+    Parents_PartsID CHARACTER varying(288),
+    PRIMARY KEY (PartsID)
 );
 
 INSERT INTO Partsinfo VALUES

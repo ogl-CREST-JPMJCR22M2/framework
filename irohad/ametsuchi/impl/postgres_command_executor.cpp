@@ -1193,10 +1193,16 @@ namespace iroha {
                 UNION
                 SELECT * FROM import_tableC
             ),
-            general_table AS
+            general_table_all AS
             (
                 select * from import_table
                 NATURAL RIGHT JOIN PartsInfo
+            ),
+            general_table AS
+            (
+                update general_table_all set parents_partsid = null
+                where partsid = :partsid
+                RETURNING (1)
             ),
             get_totalemissions AS
             (
@@ -1209,15 +1215,15 @@ namespace iroha {
                     FROM general_table, calcu
                     WHERE general_table.parents_partsid = calcu.child_partsid
                 )
-                SELECT parents_partsid, SUM(TotalEmissions) as result
+                SELECT parents_partsid, SUM(TotalEmissions) as child_totalemissions
                   FROM calcu
                   GROUP BY parents_partsid
             ),
             new_quantity AS
              (
-                 SELECT result
-                 FROM get_totalemissions
-                 WHERE parents_partsid=:partsid 
+                 SELECT child_totalemissions + emissions as result
+                 FROM get_totalemissions, general_table
+                 WHERE get_totalemissions.parents_partsid=:partsid 
              ),
             checks AS -- error code and check result
             (
