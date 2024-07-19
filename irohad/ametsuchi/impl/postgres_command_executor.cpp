@@ -1192,19 +1192,22 @@ namespace iroha {
                 SELECT * FROM import_tableB
                 UNION
                 SELECT * FROM import_tableC
-                UNION ALL
-                SELECT * FROM PartsInfo
+            ),
+            general_table AS
+            (
+                select * from import_table
+                NATURAL RIGHT JOIN PartsInfo
             ),
             get_totalemissions AS
             (
                 WITH RECURSIVE calcu(child_partsid, parents_partsid, TotalEmissions) AS
                 (
-                  SELECT import_table.partsid, import_table.parents_partsid, import_table.emissions 
-                    FROM import_table
+                  SELECT general_table.partsid, general_table.parents_partsid, general_table.emissions 
+                    FROM general_table
                   UNION ALL
-                  SELECT import_table.partsid, calcu.parents_partsid, emissions
-                    FROM import_table, calcu
-                    WHERE import_table.parents_partsid = calcu.child_partsid
+                  SELECT general_table.partsid, calcu.parents_partsid, emissions
+                    FROM general_table, calcu
+                    WHERE general_table.parents_partsid = calcu.child_partsid
                 )
                 SELECT parents_partsid, SUM(TotalEmissions) as result
                   FROM calcu
@@ -1214,7 +1217,7 @@ namespace iroha {
              (
                  SELECT result
                  FROM get_totalemissions
-                 WHERE PartsID=:partsid 
+                 WHERE parents_partsid=:partsid 
              ),
             checks AS -- error code and check result
             (
