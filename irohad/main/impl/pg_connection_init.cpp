@@ -266,10 +266,10 @@ CREATE TABLE CO2Emissions (
 CREATE extension dblink;
 
 INSERT INTO CO2Emissions VALUES
-	('P01001', '0.0'), 
-	('P02002', '0.0'),
+  ('P01001', '0.0'), 
+  ('P02002', '0.0'),
   ('P02003', '0.0'),
-	('P02004', '0.0'),
+  ('P02004', '0.0'),
   ('P03005', '0.0'),
   ('P03006', '0.0'),
   ('P03007', '0.0'),
@@ -301,22 +301,22 @@ INSERT INTO CO2Emissions VALUES
     PartsID CHARACTER varying(288) NOT NULL,
     DataLink CHARACTER varying(288) NOT NULL,
     Parents_PartsID CHARACTER varying(288) NOT NULL,
-    PRIMARY KEY (PartsID)
+    PRIMARY KEY (PartsID, Parents_PartsID)
 );
 
 INSERT INTO Partsinfo VALUES
-	('P01001', 'postgresA', 'P02002'), 
+  ('P01001', 'postgresA', 'P02002'), 
   ('P01001', 'postgresA', 'P02003'), 
   ('P01001', 'postgresA', 'P02004'), 
-	('P02002', 'postgresA', 'P03005'),
+  ('P02002', 'postgresA', 'P03005'),
   ('P02002', 'postgresA', 'P03006'),
   ('P02002', 'postgresA', 'P03007'),
   ('P02003', 'postgresA', 'P03008'),
   ('P02003', 'postgresA', 'P03009'),
-	('P02004', 'postgresA', 'P03010'),
+  ('P02004', 'postgresA', 'P03010'),
   ('P02004', 'postgresA', 'P03011'),
   ('P02004', 'postgresA', 'P03012'),
-	('P02004', 'postgresA', 'P03013'),
+  ('P02004', 'postgresA', 'P03013'),
   ('P03005', 'postgresA', 'P04014'),
   ('P03005', 'postgresA', 'P04015'),
   ('P03005', 'postgresA', 'P04016'),
