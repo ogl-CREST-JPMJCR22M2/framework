@@ -311,7 +311,7 @@ namespace {
           WHERE ar.account_id = %3%
     ),
     has_query_perm AS (
-      SELECT (SELECT * from has_root_perm)
+      SELECT (SELECT * FROM has_root_perm)
           OR (%3% = %7% AND (SELECT * FROM has_indiv_perm))
           OR (SELECT * FROM has_all_perm)
           OR (%8% = %9% AND (SELECT * FROM has_domain_perm)) AS perm
@@ -589,8 +589,8 @@ namespace iroha {
                   ":creator",
                   ":asset_id"))
                .str(),
-           "AND (SELECT * from has_perm)",
-           "WHEN NOT (SELECT * from has_perm) THEN 2"});
+           "AND (SELECT * FROM has_perm)",
+           "WHEN NOT (SELECT * FROM has_perm) THEN 2"});
 
       add_peer_statements_ = makeCommandStatements(
           sql_,
@@ -610,7 +610,7 @@ namespace iroha {
             % checkAccountRolePermission(Role::kAddPeer, ":creator"))
                .str(),
            "WHERE (SELECT * FROM has_perm)",
-           "WHEN NOT (SELECT * from has_perm) THEN 2"});
+           "WHEN NOT (SELECT * FROM has_perm) THEN 2"});
 
       add_signatory_statements_ = makeCommandStatements(
           sql_,
@@ -646,7 +646,7 @@ namespace iroha {
                                                  ":target"))
                .str(),
            "WHERE (SELECT * FROM has_perm)",
-           "WHEN NOT (SELECT * from has_perm) THEN 2"});
+           "WHEN NOT (SELECT * FROM has_perm) THEN 2"});
 
       append_role_statements_ = makeCommandStatements(
           sql_,
@@ -715,7 +715,7 @@ namespace iroha {
             % checkAccountRolePermission(Role::kAddPeer, ":creator"))
                .str(),
            "WHERE (SELECT * FROM has_perm)",
-           "WHEN NOT (SELECT * from has_perm) THEN 2"});
+           "WHEN NOT (SELECT * FROM has_perm) THEN 2"});
 
       compare_and_set_account_detail_statements_ = makeCommandStatements(
           sql_,
@@ -1035,7 +1035,7 @@ namespace iroha {
           {(boost::format(R"(
             has_perm AS (%s),
             get_peer AS (
-              SELECT * from peer WHERE public_key = lower(:pubkey) LIMIT 1
+              SELECT * FROM peer WHERE public_key = lower(:pubkey) LIMIT 1
             ),
             check_peers AS (
               SELECT 1 WHERE (SELECT COUNT(*) FROM peer) > 1
@@ -1048,9 +1048,9 @@ namespace iroha {
              AND EXISTS (SELECT * FROM get_peer)
              AND EXISTS (SELECT * FROM check_peers))",
            R"(
-             WHEN NOT EXISTS (SELECT * from get_peer) THEN 3
-             WHEN NOT EXISTS (SELECT * from check_peers) THEN 4
-             WHEN NOT (SELECT * from has_perm) THEN 2)"});
+             WHEN NOT EXISTS (SELECT * FROM get_peer) THEN 3
+             WHEN NOT EXISTS (SELECT * FROM check_peers) THEN 4
+             WHEN NOT (SELECT * FROM has_perm) THEN 2)"});
 
       remove_signatory_statements_ = makeCommandStatements(
           sql_,
@@ -1162,41 +1162,58 @@ namespace iroha {
 
       set_account_detail_statements_ = makeCommandStatements(
           sql_,
-          R"(
+          "
           WITH %s
             import_tableA AS
             (
-                select * from dblink(
+                SELECT * FROM dblink(
                     'host=postgresA port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'select partsid, emissions from offchaindb_co2emissions') 
-                    as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+                    'SELECT partsid, emissions FROM offchaindb_co2emissions') 
+                    AS t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
              ),
             import_tableB AS
             (
-                select * from dblink(
+                SELECT * FROM dblink(
                     'host=postgresB port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'select partsid, emissions from offchaindb_co2emissions') 
-                    as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+                    'SELECT partsid, emissions FROM offchaindb_co2emissions') 
+                    AS t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
             ),
             import_tableC AS
             (
-                select * from dblink(
+                SELECT * FROM dblink(
                     'host=postgresC port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'select partsid, emissions from offchaindb_co2emissions') 
-                    as t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+                    'SELECT partsid, emissions FROM offchaindb_co2emissions') 
+                    AS t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
             ),
             import_table AS
             (
-                select * from import_tableA
-                union
-                select * from import_tableB
-                union
-                select * from import_tableC
+                SELECT * FROM import_tableA
+                UNION
+                SELECT * FROM import_tableB
+                UNION
+                SELECT * FROM import_tableC
+                UNION ALL
+                SELECT * FROM PartsInfo
+            ),
+            get_totalemissions AS
+            (
+                WITH RECURSIVE calcu(child_partsid, parents_partsid, TotalEmissions) AS
+                (
+                  SELECT import_table.partsid, import_table.parents_partsid, import_table.emissions 
+                    FROM import_table
+                  UNION ALL
+                  SELECT import_table.partsid, calcu.parents_partsid, emissions
+                    FROM import_table, calcu
+                    WHERE import_table.parents_partsid = calcu.child_partsid
+                )
+                SELECT parents_partsid, SUM(TotalEmissions) as result
+                  FROM calcu
+                  GROUP BY parents_partsid
             ),
             new_quantity AS
              (
-                 SELECT emissions
-                 FROM import_table
+                 SELECT result
+                 FROM get_totalemissions
                  WHERE PartsID=:partsid 
              ),
             checks AS -- error code and check result
@@ -1206,11 +1223,11 @@ namespace iroha {
                 FROM CO2Emissions
                 WHERE PartsID = :partsid
             ),
-	    inserted AS
+	          inserted AS
             (
                 UPDATE CO2Emissions SET TotalEMISSIONS = 
                 (
-                  SELECT emissions from new_quantity 
+                  SELECT result FROM new_quantity 
                 )
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
@@ -1245,7 +1262,7 @@ namespace iroha {
           {(boost::format(R"(
             has_perm AS (%s),
             get_peer AS (
-              SELECT * from sync_peer WHERE public_key = lower(:pubkey) LIMIT 1
+              SELECT * FROM sync_peer WHERE public_key = lower(:pubkey) LIMIT 1
             ),
             check_peers AS (
               SELECT 1 WHERE (SELECT COUNT(*) FROM sync_peer) > 0
@@ -1258,9 +1275,9 @@ namespace iroha {
              AND EXISTS (SELECT * FROM get_peer)
              AND EXISTS (SELECT * FROM check_peers))",
            R"(
-             WHEN NOT EXISTS (SELECT * from get_peer) THEN 3
-             WHEN NOT EXISTS (SELECT * from check_peers) THEN 4
-             WHEN NOT (SELECT * from has_perm) THEN 2)"});
+             WHEN NOT EXISTS (SELECT * FROM get_peer) THEN 3
+             WHEN NOT EXISTS (SELECT * FROM check_peers) THEN 4
+             WHEN NOT (SELECT * FROM has_perm) THEN 2)"});
 
       set_quorum_statements_ = makeCommandStatements(
           sql_,
