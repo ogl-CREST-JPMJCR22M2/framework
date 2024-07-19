@@ -1192,8 +1192,7 @@ namespace iroha {
                 SELECT * FROM import_tableB
                 UNION
                 SELECT * FROM import_tableC
-                UNION ALL
-                SELECT * FROM PartsInfo
+                NATURAL RIGHT JOIN PartsInfo
             ),
             get_totalemissions AS
             (
