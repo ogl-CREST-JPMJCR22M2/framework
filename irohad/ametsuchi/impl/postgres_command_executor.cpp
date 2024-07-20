@@ -1164,7 +1164,7 @@ namespace iroha {
           sql_,
           R"(
           WITH %s
-            import_tableA AS
+            import_tableA AS 
             (
                 SELECT * FROM dblink(
                     'host=postgresA port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
@@ -1193,16 +1193,11 @@ namespace iroha {
                 UNION
                 SELECT * FROM import_tableC
             ),
-            general_table_all AS
-            (
-                select * from import_table
-                NATURAL RIGHT JOIN PartsInfo
-            ),
             general_table AS
-            (
-                update general_table_all set parents_partsid = null
-                where partsid = :partsid
-                RETURNING (1)
+            (   
+                SELECT * FROM import_table
+                NATURAL RIGHT JOIN 
+                PartsInfo
             ),
             get_totalemissions AS
             (
@@ -1213,7 +1208,8 @@ namespace iroha {
                   UNION ALL
                   SELECT general_table.partsid, calcu.parents_partsid, emissions
                     FROM general_table, calcu
-                    WHERE general_table.parents_partsid = calcu.child_partsid
+                    WHERE general_table.parents_partsid = calcu.child_partsid 
+                      AND calcu.child_partsid != :partsid
                 )
                 SELECT parents_partsid, SUM(TotalEmissions) as child_totalemissions
                   FROM calcu
