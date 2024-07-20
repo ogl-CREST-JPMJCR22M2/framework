@@ -1203,22 +1203,29 @@ namespace iroha {
                 WITH RECURSIVE calcu(child_partsid, parents_partsid, TotalEmissions) AS
                 (
                   SELECT general_table.partsid, general_table.parents_partsid, general_table.emissions 
-                    FROM general_table
+                   FROM general_table
                   UNION ALL
                   SELECT general_table.partsid, calcu.parents_partsid, emissions
-                    FROM general_table, calcu
-                    WHERE general_table.parents_partsid = calcu.child_partsid 
-                      AND calcu.child_partsid != :partsid
+                   FROM general_table, calcu
+                   WHERE general_table.parents_partsid = calcu.child_partsid 
+                    AND calcu.child_partsid != :partsid
                 )
-                SELECT parents_partsid, SUM(TotalEmissions) as child_totalemi
-                  FROM calcu
-                  GROUP BY parents_partsid
+                SELECT parents_partsid, SUM(TotalEmissions) AS child_totalemi
+                 FROM calcu
+                 GROUP BY parents_partsid
             ),
             new_quantity AS
              (
-                 SELECT child_totalemissions + emissions as result
-                 FROM get_totalemissions, import_table
-                 WHERE get_totalemissions.parents_partsid=:partsid AND import_table.partsid = :partsid
+                 WITH
+                 get_child_totalemi AS
+                 (
+                    SELECT child_totalemi 
+                     FROM get_totalemi
+                     WHERE get_totalemi.parents_partsid=:partsid
+                 )
+                 SELECT coalesce(child_totalemi, 0) + emissions as result
+                  FROM get_child_totalemi, import_table
+                  WHERE import_table.partsid = :partsid
              ),
             checks AS -- error code and check result
             (
