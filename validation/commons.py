@@ -4,6 +4,8 @@ from psycopg2 import sql
 iroha = Iroha('admin@test')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
+
+
 #######################
 ## Run iroha command ##
 #######################
@@ -31,8 +33,9 @@ def IROHA_COMMANDexecutor(partsid, peer): #peer:executing peer(account)
     for status in net.tx_status_stream(tx):
         print(status)
 
+
 if __name__ == '__main__':
 
     partsid = 'P01001'
-    IROHA_COMMANDexecutor(partsid, 'postgresA')
+    #IROHA_COMMANDexecutor(partsid, 'postgresA')
     

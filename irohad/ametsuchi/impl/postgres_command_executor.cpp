@@ -1219,11 +1219,11 @@ namespace iroha {
                  WITH
                  get_child_totalemi AS
                  (
-                    SELECT child_totalemi 
+                    SELECT coalesce(child_totalemi, 0) AS child_totalemi_
                      FROM get_totalemi
                      WHERE get_totalemi.parents_partsid=:partsid
                  )
-                 SELECT coalesce(child_totalemi, 0) + emissions as result
+                 SELECT emissions, child_totalemi_ + emissions as new_Totalemi
                   FROM get_child_totalemi, import_table
                   WHERE import_table.partsid = :partsid
              ),
@@ -1233,12 +1233,32 @@ namespace iroha {
                 SELECT 3 code, count(1) = 1 result
                 FROM CO2Emissions
                 WHERE PartsID = :partsid
+
+                -- check value of emissions
+                UNION
+                SELECT 4, emissions >= 0
+                FROM new_quantity
+
+		            -- check value of emissions
+                UNION
+                SELECT 5, emissions < 1000
+                FROM new_quantity
+                
+                -- check value of sum_child_emissions
+                UNION
+                SELECT 6, child_totalemi_ >= 0
+                FROM get_child_totalemi
+
+                -- dest new_Totalemi overflow
+                UNION
+                SELECT 7, new_Totalemi < (2::decimal ^ 256) / (10::decimal ^ 10)
+                FROM new_quantity
             ),
 	          inserted AS
             (
                 UPDATE CO2Emissions SET TotalEMISSIONS = 
                 (
-                  SELECT result FROM new_quantity 
+                  SELECT new_Totalemi FROM new_quantity 
                 )
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
