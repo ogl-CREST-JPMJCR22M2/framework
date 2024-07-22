@@ -1166,8 +1166,8 @@ namespace iroha {
           WITH %s
             new_quantity AS
              (
-                 SELECT :new_emissions::decimal as newEmissions, 
-			              :sum_child_emissions::decimal as sumChildEmissions,
+                 SELECT :new_emissions::decimal as newEmissions,
+                    :sum_child_emissions::decimal as sumChildEmissions,
 			              :new_emissions::decimal + :sum_child_emissions::decimal as value
                  FROM CO2Emissions
                  WHERE PartsID=:partsid 
@@ -1202,12 +1202,10 @@ namespace iroha {
             ),
 	    inserted AS
             (
-                UPDATE CO2Emissions SET (TotalEMISSIONS, EMISSIONS) = (
-                	( SELECT value FROM new_quantity),
-			( SELECT newEmissions FROM new_quantity)
-		)
+                UPDATE CO2Emissions SET TotalEMISSIONS = 
+                	( SELECT value FROM new_quantity )
                 WHERE PartsID=:partsid
-		AND (SELECT bool_and(checks.result) FROM checks) %s
+                AND (SELECT bool_and(checks.result) FROM checks) %s
                 RETURNING (1)
             )
           SELECT CASE

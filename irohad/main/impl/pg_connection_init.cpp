@@ -250,6 +250,7 @@ insert into schema_version
           return fmt::format("{}, {}, {}", v.major, v.minor, v.patch);
         }()
         + R"();
+
 CREATE TABLE top_block_info (
     lock CHAR(1) DEFAULT 'X' NOT NULL PRIMARY KEY,
     height int,
@@ -257,16 +258,81 @@ CREATE TABLE top_block_info (
 );
 
 CREATE TABLE CO2Emissions (
-    PartsID CHARACTER varying(288),
+    PartsID CHARACTER varying(288) NOT NULL,
     TotalEMISSIONS DECIMAL NOT NULL ,
-    EMISSIONS DECIMAL NOT NULL ,
     PRIMARY KEY (PartsID)
 );
 
 INSERT INTO CO2Emissions VALUES
-	('e01001', '0.0', '0.0'), 
-	('e01002', '0.0', '0.0'),
-	('n02001', '0.0', '0.0');
+	('P01001', '0.0'), 
+	('P02002', '0.0'),
+  ('P02003', '0.0'),
+	('P02004', '0.0'),
+  ('P03005', '0.0'),
+  ('P03006', '0.0'),
+  ('P03007', '0.0'),
+  ('P03008', '0.0'),
+  ('P03009', '0.0'),
+  ('P03010', '0.0'),
+  ('P03011', '0.0'),
+  ('P03012', '0.0'),
+  ('P03013', '0.0'),
+  ('P04014', '0.0'),
+  ('P04015', '0.0'),
+  ('P04016', '0.0'),
+  ('P04017', '0.0'),
+  ('P04018', '0.0'),
+  ('P04019', '0.0'),
+  ('P04020', '0.0'),
+  ('P04021', '0.0'),
+  ('P04022', '0.0'),
+  ('P04023', '0.0'),
+  ('P04024', '0.0'),
+  ('P04025', '0.0'),
+  ('P04026', '0.0'),
+  ('P04027', '0.0'),
+  ('P04028', '0.0'),
+  ('P04029', '0.0'),
+  ('P04030', '0.0');
+
+  CREATE TABLE Partsinfo (
+    PartsID CHARACTER varying(288) NOT NULL,
+    DataLink CHARACTER varying(288) NOT NULL,
+    ChildPartsID CHARACTER varying(288)[],
+    PRIMARY KEY (PartsID)
+);
+
+INSERT INTO Partsinfo VALUES
+	('P01001', 'postgresA', '{P02002,P02003,P02004}'), 
+	('P02002', 'postgresA', '{P03005,P03006,P03007}'),
+  ('P02003', 'postgresA', '{P03008,P03009}'),
+	('P02004', 'postgresA', '{P03010,P03011,P03012,P03013}'),
+  ('P03005', 'postgresA', '{P04014,P04015,P04016,P04017}'),
+  ('P03006', 'postgresC', '{P04018,P04019}'),
+  ('P03007', 'postgresB', '{}'),
+  ('P03008', 'postgresC', '{P04020,P04021,P04022}'),
+  ('P03009', 'postgresB', '{P04023,P04024}'),
+  ('P03010', 'postgresA', '{}'),
+  ('P03011', 'postgresA', '{}'),
+  ('P03012', 'postgresC', '{P04025,P04026,P04027}'),
+  ('P03013', 'postgresB', '{P04028,P04029,P04030}'),
+  ('P04014', 'postgresC', '{}'),
+  ('P04015', 'postgresC', '{}'),
+  ('P04016', 'postgresB', '{}'),
+  ('P04017', 'postgresB', '{}'),
+  ('P04018', 'postgresC', '{}'),
+  ('P04019', 'postgresC', '{}'),
+  ('P04020', 'postgresC', '{}'),
+  ('P04021', 'postgresC', '{}'),
+  ('P04022', 'postgresC', '{}'),
+  ('P04023', 'postgresB', '{}'),
+  ('P04024', 'postgresB', '{}'),
+  ('P04025', 'postgresC', '{}'),
+  ('P04026', 'postgresC', '{}'),
+  ('P04027', 'postgresC', '{}'),
+  ('P04028', 'postgresC', '{}'),
+  ('P04029', 'postgresC', '{}'),
+  ('P04030', 'postgresB', '{}');
 
 CREATE TABLE role (
     role_id character varying(32),
