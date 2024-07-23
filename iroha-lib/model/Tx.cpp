@@ -180,11 +180,11 @@ Tx& Tx::setAccountDetail(
 
 Tx& Tx::setAccountQuorum(
         const std::string& account_id,
-        uint32_t quorum)
+        const std::string& part_id)
 {
     auto cmd = cmd_generator_.generateSetAccountQuorum(
                 account_id,
-                quorum);
+                parts_id);
     addCommand(*cmd);
     return *this;
 }

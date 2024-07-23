@@ -187,9 +187,8 @@ namespace iroha {
       PbCommandFactory::serializeSubtractAssetQuantity(
           const model::SubtractAssetQuantity &subtract_asset_quantity) {
         protocol::SubtractAssetQuantity pb_subtract_asset_quantity;
-        pb_subtract_asset_quantity.set_asset_id(
-            subtract_asset_quantity.asset_id);
-        pb_subtract_asset_quantity.set_amount(subtract_asset_quantity.amount);
+        pb_subtract_asset_quantity.set_asset_id(subtract_asset_quantity.account_id);
+        pb_subtract_asset_quantity.set_amount(subtract_asset_quantity.parts_id);
         return pb_subtract_asset_quantity;
       }
 
@@ -197,10 +196,9 @@ namespace iroha {
       PbCommandFactory::deserializeSubtractAssetQuantity(
           const protocol::SubtractAssetQuantity &pb_subtract_asset_quantity) {
         model::SubtractAssetQuantity subtract_asset_quantity;
-        subtract_asset_quantity.asset_id =
-            pb_subtract_asset_quantity.asset_id();
-        subtract_asset_quantity.amount = pb_subtract_asset_quantity.amount();
-        subtract_asset_quantity.description = pb_subtract_asset_quantity.description();
+        subtract_asset_quantity.account_id =
+            pb_subtract_asset_quantity.account_id();
+        subtract_asset_quantity.parts_id = pb_subtract_asset_quantity.asset_id();
         return subtract_asset_quantity;
       }
 

@@ -11,34 +11,18 @@
 namespace iroha {
   namespace model {
 
-    /**
-     * Subtract amount of asset to an account
-     */
     struct SubtractAssetQuantity : public Command {
-      /**
-       * Asset to issue
-       * Note: must exist in the system
-       */
-      std::string asset_id;
-
-      /**
-       * Amount to add to account asset
-       */
-      std::string amount;
-
-      /**
-       * Description
-       */
-      std::string description;
+      std::string account_id;
+      std::string parts_id;
 
       bool operator==(const Command &command) const override;
 
       SubtractAssetQuantity() {}
 
-      SubtractAssetQuantity(const std::string &asset_id,
-                            const std::string &amount,
-                            const std::string &description)
-          : asset_id(asset_id), amount(amount), description(description) {}
+      SubtractAssetQuantity(const std::string &account_id,
+                            const std::string &parts_id)
+          : account_id(account_id), 
+          parts_id(parts_id) {}
     };
   }  // namespace model
 }  // namespace iroha

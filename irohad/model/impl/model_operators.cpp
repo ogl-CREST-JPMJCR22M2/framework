@@ -97,11 +97,9 @@ namespace iroha {
     bool SubtractAssetQuantity::operator==(const Command &command) const {
       if (! instanceof <SubtractAssetQuantity>(command))
         return false;
-      auto subtract_asset_quantity =
-          static_cast<const SubtractAssetQuantity &>(command);
-      return subtract_asset_quantity.asset_id == asset_id
-          && subtract_asset_quantity.amount == amount
-          && subtract_asset_quantity.description == description;
+      auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
+      return subtract_asset_quantity.account_id == account_id
+          and subtract_asset_quantity.parts_id == parts_id;
     }
 
     /* AddPeer */

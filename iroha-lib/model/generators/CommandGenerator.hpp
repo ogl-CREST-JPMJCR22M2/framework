@@ -62,13 +62,12 @@ public:
             const GrantablePermission permission);
     std::shared_ptr<Command> generateSetAccountDetail(
             const std::string& account_id,
-            const std::string& parts_id;
+            const std::string& parts_id;)
     std::shared_ptr<Command> generateSetAccountQuorum(
             const std::string& account_id, uint32_t quorum);
     std::shared_ptr<Command> generateSubtractAssetQuantity(
-            const std::string& asset_id,
-            const std::string& amount,
-            const std::string& title);
+            const std::string& account_id,
+            const std::string& parts_id;)
     std::shared_ptr<Command> generateTransferAsset(
             const std::string& account_id,
             const std::string& dest_account_id,

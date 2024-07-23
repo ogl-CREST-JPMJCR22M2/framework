@@ -228,17 +228,12 @@ std::shared_ptr<Command> CommandGenerator::generateSetAccountQuorum(
 }
 
 std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
-        const std::string& asset_id,
-        const std::string& amount,
-        const std::string& description)
+        const std::string& account_id,
+        const std::string& parts_id)
 {
     SubtractAssetQuantity subtractAssetQuantity;
-    subtractAssetQuantity.set_asset_id(asset_id);
-    subtractAssetQuantity.set_amount(amount);
-    std::optional<std::string> description_optional = description;
-    if (description_optional) {
-        subtractAssetQuantity.set_description(*description_optional);
-    }
+    subtractAssetQuantity.set_account_id(account_id);
+    subtractAssetQuantity.set_parts_id(parts_id);
 
     auto cmd = Command();
     cmd.set_allocated_subtract_asset_quantity(new SubtractAssetQuantity(subtractAssetQuantity));
