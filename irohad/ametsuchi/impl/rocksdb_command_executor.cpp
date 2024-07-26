@@ -1033,6 +1033,7 @@ RocksDbCommandExecutor::ExecutionResult RocksDbCommandExecutor::operator()(
     shared_model::interface::types::CommandIndexType /*cmd_index*/,
     bool do_validation,
     shared_model::interface::RolePermissionSet const &creator_permissions) {
+  /*
   // TODO(iceseer): fix the case there will be no delimiter
   auto const &[creator_account_name, creator_domain_id] =
       staticSplitId<2>(creator_account_id);
@@ -1045,7 +1046,7 @@ RocksDbCommandExecutor::ExecutionResult RocksDbCommandExecutor::operator()(
                                      creator_permissions,
                                      Role::kSubtractAssetQty,
                                      Role::kSubtractDomainAssetQty));
-
+ 
   // check if asset exists
   RDB_TRY_GET_VALUE(opt_result,
                     forAsset<kDbOperation::kGet, kDbEntry::kMustExist>(
@@ -1079,7 +1080,7 @@ RocksDbCommandExecutor::ExecutionResult RocksDbCommandExecutor::operator()(
 
   RDB_ERROR_CHECK(forAccountAsset<kDbOperation::kPut>(
       common, creator_account_name, creator_domain_id, command.assetId()));
-
+*/
   return {};
 }
 

@@ -1224,7 +1224,7 @@ namespace iroha {
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM CO2Emissionsc
+                FROM CO2Emissions
                 WHERE PartsID = :partsid
 
                 -- check value of emissions
@@ -1396,10 +1396,10 @@ namespace iroha {
             (
                 WITH RECURSIVE calcu(child_partsid, parents_partsid, TotalEmissions) AS
                 (
-                  SELECT general_table.partsid, general_table.parents_partsid, general_table.emissions 
+                  SELECT general_table.partsid, general_table.parents_partsid, general_table.TotalEMISSIONS 
                    FROM general_table
                   UNION ALL
-                  SELECT general_table.partsid, calcu.parents_partsid, emissions
+                  SELECT general_table.partsid, calcu.parents_partsid, general_table.TotalEMISSIONS
                    FROM general_table, calcu
                    WHERE general_table.parents_partsid = calcu.child_partsid 
                     AND calcu.child_partsid != :partsid
@@ -1418,7 +1418,7 @@ namespace iroha {
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM CO2Emissionsc
+                FROM CO2Emissions
                 WHERE PartsID = :partsid
 
                 -- check value of emissions
