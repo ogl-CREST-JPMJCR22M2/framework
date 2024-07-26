@@ -13,22 +13,17 @@
 
 namespace shared_model {
   namespace proto {
-    class SubtractAssetQuantity final
-        : public interface::SubtractAssetQuantity {
+    class SubtractAssetQuantity final : public interface::SubtractAssetQuantity {
      public:
       explicit SubtractAssetQuantity(iroha::protocol::Command &command);
 
-      const interface::types::AssetIdType &assetId() const override;
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::Amount &amount() const override;
+      const interface::types::PartsIdType &partsId() const override;
 
-      const std::string &description() const override;
 
      private:
       const iroha::protocol::SubtractAssetQuantity &subtract_asset_quantity_;
-
-      const interface::Amount amount_;
-      const std::string description_;
     };
 
   }  // namespace proto

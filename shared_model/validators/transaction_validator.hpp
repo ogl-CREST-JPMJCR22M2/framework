@@ -215,8 +215,8 @@ namespace shared_model {
         return aggregateErrors(
             "SubtractAssetQuantity",
             {},
-            {validator_.validateAssetId(subtract_asset_quantity.assetId()),
-             validator_.validateAmount(subtract_asset_quantity.amount())});
+            {validator_.validateAssetId(subtract_asset_quantity.accountId()),
+             validator_.validateAmount(subtract_asset_quantity.partsId())});
       }
 
       std::optional<ValidationError> operator()(

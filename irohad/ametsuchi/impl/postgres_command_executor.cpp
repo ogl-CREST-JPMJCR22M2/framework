@@ -1216,22 +1216,15 @@ namespace iroha {
             ),
             new_quantity AS
              (
-                 WITH
-                 get_child_totalemi AS
-                 (
-                    SELECT coalesce(child_totalemi, 0) AS child_totalemi_
-                     FROM get_totalemi
-                     WHERE get_totalemi.parents_partsid=:partsid
-                 )
-                 SELECT emissions, child_totalemi_ + emissions as new_Totalemi
-                  FROM get_child_totalemi, import_table
-                  WHERE import_table.partsid = :partsid
+                 SELECT emissions, child_totalemi + emissions as new_Totalemi
+                  FROM get_totalemi, import_table
+                  WHERE get_totalemi.parents_partsid=:partsid AND import_table.partsid = :partsid
              ),
             checks AS -- error code and check result
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM CO2Emissions
+                FROM CO2Emissionsc
                 WHERE PartsID = :partsid
 
                 -- check value of emissions
@@ -1246,8 +1239,8 @@ namespace iroha {
                 
                 -- check value of sum_child_emissions
                 UNION
-                SELECT 6, child_totalemi_ >= 0
-                FROM get_child_totalemi
+                SELECT 6, child_totalemi >= 0
+                FROM get_totalemi
 
                 -- dest new_Totalemi overflow
                 UNION
@@ -1268,7 +1261,7 @@ namespace iroha {
 	    %s
             WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
             ELSE (SELECT code FROM checks WHERE not result ORDER BY code ASC LIMIT 1)
-          END AS result)",
+            END AS result)",
           /*boost::formatは上の1つ目の%s*/
           {(boost::format(R"(has_role_perm AS (%s),)")
             % checkAccountRolePermission(Role::kSetQuorum, ":creator")) /*admin@testがkSetDetailを持ってなかったため*/
@@ -1382,54 +1375,92 @@ namespace iroha {
           sql_,
           R"(
           WITH %s
-            has_account AS (SELECT account_id FROM account
-                            WHERE account_id = :creator LIMIT 1),
-            has_asset AS (SELECT asset_id FROM asset
-                          WHERE asset_id = :asset_id
-                          AND precision >= :precision LIMIT 1),
-            amount AS (SELECT amount FROM account_has_asset
-                       WHERE asset_id = :asset_id
-                       AND account_id = :creator LIMIT 1),
-            new_value AS (SELECT
-                           (SELECT
-                               CASE WHEN EXISTS
-                                   (SELECT amount FROM amount LIMIT 1)
-                                   THEN (SELECT amount FROM amount LIMIT 1)
-                               ELSE 0::decimal
-                           END) - :quantity::decimal AS value
-                       ),
+            datalink AS
+            (
+                SELECT DataLink FROM PartsInfo
+                WHERE PartsID = :partsid
+            ),
+            import_table AS 
+            (
+                SELECT * FROM dblink(
+                    'host=(select * from datalink) port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
+                    'SELECT partsid, emissions FROM offchaindb_co2emissions') 
+                    AS t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+             ),
+            general_table AS
+            (   
+                SELECT * FROM co2emissions
+                NATURAL RIGHT JOIN PartsInfo
+            ),
+            get_totalemi AS
+            (
+                WITH RECURSIVE calcu(child_partsid, parents_partsid, TotalEmissions) AS
+                (
+                  SELECT general_table.partsid, general_table.parents_partsid, general_table.emissions 
+                   FROM general_table
+                  UNION ALL
+                  SELECT general_table.partsid, calcu.parents_partsid, emissions
+                   FROM general_table, calcu
+                   WHERE general_table.parents_partsid = calcu.child_partsid 
+                    AND calcu.child_partsid != :partsid
+                )
+                SELECT parents_partsid, SUM(TotalEmissions) AS child_totalemi
+                 FROM calcu
+                 GROUP BY parents_partsid
+            ),
+            new_quantity AS
+             (
+                 SELECT emissions, child_totalemi + emissions as new_Totalemi
+                  FROM get_totalemi, import_table
+                  WHERE get_totalemi.parents_partsid=:partsid AND import_table.partsid = :partsid
+             ),
+            checks AS -- error code and check result
+            (
+                -- source account exists
+                SELECT 3 code, count(1) = 1 result
+                FROM CO2Emissionsc
+                WHERE PartsID = :partsid
+
+                -- check value of emissions
+                UNION
+                SELECT 4, emissions >= 0
+                FROM new_quantity
+
+		            -- check value of emissions
+                UNION
+                SELECT 5, emissions < 1000
+                FROM new_quantity
+                
+                -- check value of sum_child_emissions
+                UNION
+                SELECT 6, child_totalemi >= 0
+                FROM get_totalemi
+
+                -- dest new_Totalemi overflow
+                UNION
+                SELECT 7, new_Totalemi < (2::decimal ^ 256) / (10::decimal ^ 10)
+                FROM new_quantity
+            ),
             inserted AS
             (
-               INSERT INTO account_has_asset(account_id, asset_id, amount)
-               (
-                   SELECT :creator, :asset_id, value FROM new_value
-                   WHERE EXISTS (SELECT * FROM has_account LIMIT 1) AND
-                     EXISTS (SELECT * FROM has_asset LIMIT 1) AND
-                     EXISTS (SELECT value FROM new_value WHERE value >= 0 LIMIT 1)
-                     %s
-               )
-               ON CONFLICT (account_id, asset_id)
-               DO UPDATE SET amount = EXCLUDED.amount
-               RETURNING (1)
+                UPDATE CO2Emissions SET TotalEMISSIONS = 
+                (
+                  SELECT new_Totalemi FROM new_quantity 
+                )
+                WHERE PartsID=:partsid
+                AND (SELECT bool_and(checks.result) FROM checks) %s
+                RETURNING (1)
             )
           SELECT CASE
-              WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
               %s
-              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 3
-              WHEN NOT EXISTS
-                  (SELECT value FROM new_value WHERE value >= 0 LIMIT 1) THEN 4
-              ELSE 1
-          END AS result)",
-          {(boost::format(R"(
-               has_perm AS (%s),)")
-            % checkAccountDomainRoleOrGlobalRolePermission(
-                  Role::kSubtractAssetQty,
-                  Role::kSubtractDomainAssetQty,
-                  ":creator",
-                  ":asset_id"))
+            WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
+            ELSE (SELECT code FROM checks WHERE not result ORDER BY code ASC LIMIT 1)
+            END AS result)",
+          {(boost::format(R"(has_role_perm AS (%s),)")
+            % checkAccountRolePermission(Role::kSetQuorum, ":creator"))
                .str(),
-           R"( AND (SELECT * FROM has_perm))",
-           R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"});
+           R"( AND (SELECT * FROM has_role_perm))",
+           R"( WHEN NOT (SELECT * FROM has_role_perm) THEN 2 )"});
 
       transfer_asset_statements_ = makeCommandStatements(
           sql_,
@@ -2043,18 +2074,22 @@ namespace iroha {
         const std::string &tx_hash,
         shared_model::interface::types::CommandIndexType cmd_index,
         bool do_validation) {
-      auto &asset_id = command.assetId();
-      auto quantity = command.amount().toStringRepr();
-      uint32_t precision = command.amount().precision();
+      auto &account_id = command.accountId();
+      auto &parts_id = command.partsId();
 
       StatementExecutor executor(subtract_asset_quantity_statements_,
                                  do_validation,
                                  "SubtractAssetQuantity",
                                  perm_converter_);
-      executor.use("creator", creator_account_id);
-      executor.use("asset_id", asset_id);
-      executor.use("quantity", quantity);
-      executor.use("precision", precision);
+      if (not creator_account_id.empty()) {
+        executor.use("creator", creator_account_id);
+      } else {
+        // When creator is not known, it is genesis block
+        static const std::string genesis_creator_account_id = "genesis";
+        executor.use("creator", genesis_creator_account_id);
+      }
+      executor.use("target", account_id);
+      executor.use("partsid", parts_id);
 
       return executor.execute();
     }

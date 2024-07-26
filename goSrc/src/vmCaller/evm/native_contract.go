@@ -415,8 +415,8 @@ func addAssetQuantity(ctx native.Context, args addAssetQuantityArgs) (addAssetQu
 }
 
 type subtractAssetQuantityArgs struct {
-	Asset  string
-	Amount string
+	Account string
+	Id     string
 }
 
 type subtractAssetQuantityRets struct {
@@ -424,14 +424,14 @@ type subtractAssetQuantityRets struct {
 }
 
 func subtractAssetQuantity(ctx native.Context, args subtractAssetQuantityArgs) (subtractAssetQuantityRets, error) {
-	err := iroha.SubtractAssetQuantity(args.Asset, args.Amount)
+	err := iroha.SubtractAssetQuantity(args.Account, args.Id)
 	if err != nil {
 		return subtractAssetQuantityRets{Result: false}, err
 	}
 
 	ctx.Logger.Trace.Log("function", "subtractAssetQuantity",
-		"asset", args.Asset,
-		"amount", args.Amount)
+		"account", args.Account,
+		"id", args.Id)
 
 	return subtractAssetQuantityRets{Result: true}, nil
 }

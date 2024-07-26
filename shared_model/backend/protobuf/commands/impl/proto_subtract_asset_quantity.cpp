@@ -8,22 +8,17 @@
 namespace shared_model {
   namespace proto {
 
-    SubtractAssetQuantity::SubtractAssetQuantity(
-        iroha::protocol::Command &command)
-        : subtract_asset_quantity_{command.subtract_asset_quantity()},
-          amount_{subtract_asset_quantity_.amount()} {}
+    SubtractAssetQuantity::SubtractAssetQuantity(iroha::protocol::Command &command)
+        : subtract_asset_quantity_{command.subtract_asset_quantity()}{}
 
-    const interface::types::AssetIdType &SubtractAssetQuantity::assetId()
+    const interface::types::AssetIdType &SubtractAssetQuantity::accountId()
         const {
-      return subtract_asset_quantity_.asset_id();
+      return subtract_asset_quantity_.account_id();
     }
 
-    const interface::Amount &SubtractAssetQuantity::amount() const {
-      return amount_;
-    }
-
-    const std::string &SubtractAssetQuantity::description() const {
-      return description_;
+    const interface::types::PartsIdType &SubtractAssetQuantity::partsId()
+        const {
+      return subtract_asset_quantity_.parts_id();
     }
 
   }  // namespace proto

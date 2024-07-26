@@ -22,16 +22,11 @@ namespace shared_model {
       /**
        * @return asset identifier
        */
-      virtual const types::AssetIdType &assetId() const = 0;
+      virtual const types::AccountIdType &accountId() const = 0;
       /**
        * @return quantity of asset for subtracting
        */
-      virtual const Amount &amount() const = 0;
-
-      /**
-       * @return description
-      */
-      virtual const std::string &description() const = 0;
+      virtual const types::PartsIdType &partsId() const = 0;
 
       std::string toString() const override;
 

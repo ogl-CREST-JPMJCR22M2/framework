@@ -67,7 +67,7 @@ public:
             const std::string& account_id, uint32_t quorum);
     std::shared_ptr<Command> generateSubtractAssetQuantity(
             const std::string& account_id,
-            const std::string& parts_id;)
+            const std::string& parts_id);
     std::shared_ptr<Command> generateTransferAsset(
             const std::string& account_id,
             const std::string& dest_account_id,
