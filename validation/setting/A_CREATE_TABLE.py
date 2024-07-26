@@ -20,14 +20,14 @@ try:
         cur: cursor
 
         cur.execute(
-            """CREATE TABLE IF NOT EXISTS offchainDB_CO2EMISSIONS(
+            """CREATE TABLE IF NOT EXISTS offchainDB_CFPval(
                     PartsID CHARACTER varying(288),
-                    TotalEMISSIONS DECIMAL NOT NULL ,
-                    EMISSIONS DECIMAL NOT NULL ,
+                    TotalCFP DECIMAL NOT NULL ,
+                    CFP DECIMAL NOT NULL ,
                     PRIMARY KEY (PartsID)
             );
 
-            INSERT INTO offchainDB_CO2EMISSIONS VALUES
+            INSERT INTO offchainDB_CFPval VALUES
             ('P01001', '0.0', '1.0'), 
             ('P02002', '0.0', '2.0'),
             ('P02003', '0.0', '3.0'),

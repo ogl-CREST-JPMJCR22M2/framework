@@ -257,15 +257,15 @@ CREATE TABLE top_block_info (
     hash character varying(128)
 );
 
-CREATE TABLE CO2Emissions (
+CREATE TABLE CFPval (
     PartsID CHARACTER varying(288) NOT NULL,
-    TotalEMISSIONS DECIMAL NOT NULL ,
+    TotalCFP DECIMAL NOT NULL ,
     PRIMARY KEY (PartsID)
 );
 
 CREATE extension dblink;
 
-INSERT INTO CO2Emissions VALUES
+INSERT INTO CFPval VALUES
   ('P01001', '0.0'), 
   ('P02002', '0.0'),
   ('P02003', '0.0'),

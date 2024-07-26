@@ -1168,22 +1168,22 @@ namespace iroha {
             (
                 SELECT * FROM dblink(
                     'host=postgresA port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partsid, emissions FROM offchaindb_co2emissions') 
-                    AS t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+                    'SELECT partsid, cfp FROM offchaindb_cfpval') 
+                    AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
              ),
             import_tableB AS
             (
                 SELECT * FROM dblink(
                     'host=postgresB port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partsid, emissions FROM offchaindb_co2emissions') 
-                    AS t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+                    'SELECT partsid, cfp FROM offchaindb_cfpval') 
+                    AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
             ),
             import_tableC AS
             (
                 SELECT * FROM dblink(
                     'host=postgresC port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partsid, emissions FROM offchaindb_co2emissions') 
-                    AS t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+                    'SELECT partsid, cfp FROM offchaindb_cfpval') 
+                    AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
             ),
             import_table AS
             (
@@ -1198,60 +1198,60 @@ namespace iroha {
                 SELECT * FROM import_table
                 NATURAL RIGHT JOIN PartsInfo
             ),
-            get_totalemi AS
+            get_totalcfp AS
             (
-                WITH RECURSIVE calcu(child_partsid, parents_partsid, TotalEmissions) AS
+                WITH RECURSIVE calcu(child_partsid, parents_partsid, totalcfp) AS
                 (
-                  SELECT general_table.partsid, general_table.parents_partsid, general_table.emissions 
+                  SELECT general_table.partsid, general_table.parents_partsid, general_table.cfp 
                    FROM general_table
                   UNION ALL
-                  SELECT general_table.partsid, calcu.parents_partsid, emissions
+                  SELECT general_table.partsid, calcu.parents_partsid, cfp
                    FROM general_table, calcu
                    WHERE general_table.parents_partsid = calcu.child_partsid 
                     AND calcu.child_partsid != :partsid
                 )
-                SELECT parents_partsid, SUM(TotalEmissions) AS child_totalemi
+                SELECT parents_partsid, SUM(totalcfp) AS child_totalcfp
                  FROM calcu
                  GROUP BY parents_partsid
             ),
             new_quantity AS
              (
-                 SELECT emissions, child_totalemi + emissions as new_Totalemi
-                  FROM get_totalemi, import_table
-                  WHERE get_totalemi.parents_partsid=:partsid AND import_table.partsid = :partsid
+                 SELECT cfp, child_totalcfp + cfp as new_Totalcfp
+                  FROM get_totalcfp, import_table
+                  WHERE get_totalcfp.parents_partsid=:partsid AND import_table.partsid = :partsid
              ),
             checks AS -- error code and check result
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM CO2Emissions
+                FROM cfpval
                 WHERE PartsID = :partsid
 
-                -- check value of emissions
+                -- check value of cfp
                 UNION
-                SELECT 4, emissions >= 0
+                SELECT 4, cfp >= 0
                 FROM new_quantity
 
-		            -- check value of emissions
+		            -- check value of cfp
                 UNION
-                SELECT 5, emissions < 1000
+                SELECT 5, cfp < 1000
                 FROM new_quantity
                 
-                -- check value of sum_child_emissions
+                -- check value of sum_child_cfp
                 UNION
-                SELECT 6, child_totalemi >= 0
-                FROM get_totalemi
+                SELECT 6, child_totalcfp >= 0
+                FROM get_totalcfp
 
-                -- dest new_Totalemi overflow
+                -- dest new_Totalcfp overflow
                 UNION
-                SELECT 7, new_Totalemi < (2::decimal ^ 256) / (10::decimal ^ 10)
+                SELECT 7, new_Totalcfp < (2::decimal ^ 256) / (10::decimal ^ 10)
                 FROM new_quantity
             ),
 	          inserted AS
             (
-                UPDATE CO2Emissions SET TotalEMISSIONS = 
+                UPDATE cfpval SET totalcfp = 
                 (
-                  SELECT new_Totalemi FROM new_quantity 
+                  SELECT new_Totalcfp FROM new_quantity 
                 )
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
@@ -1384,68 +1384,68 @@ namespace iroha {
             (
                 SELECT * FROM dblink(
                     'host=(select * from datalink) port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partsid, emissions FROM offchaindb_co2emissions') 
-                    AS t1(partsid CHARACTER varying(288), EMISSIONS DECIMAL)
+                    'SELECT partsid, cfp FROM offchaindb_cfpval') 
+                    AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
              ),
             general_table AS
             (   
-                SELECT * FROM co2emissions
+                SELECT * FROM cfpval
                 NATURAL RIGHT JOIN PartsInfo
             ),
-            get_totalemi AS
+            get_totalcfp AS
             (
-                WITH RECURSIVE calcu(child_partsid, parents_partsid, TotalEmissions) AS
+                WITH RECURSIVE calcu(child_partsid, parents_partsid, totalcfp) AS
                 (
-                  SELECT general_table.partsid, general_table.parents_partsid, general_table.TotalEMISSIONS 
+                  SELECT general_table.partsid, general_table.parents_partsid, general_table.totalcfp 
                    FROM general_table
                   UNION ALL
-                  SELECT general_table.partsid, calcu.parents_partsid, general_table.TotalEMISSIONS
+                  SELECT general_table.partsid, calcu.parents_partsid, general_table.totalcfp
                    FROM general_table, calcu
                    WHERE general_table.parents_partsid = calcu.child_partsid 
                     AND calcu.child_partsid != :partsid
                 )
-                SELECT parents_partsid, SUM(TotalEmissions) AS child_totalemi
+                SELECT parents_partsid, SUM(totalcfp) AS child_totalcfp
                  FROM calcu
                  GROUP BY parents_partsid
             ),
             new_quantity AS
              (
-                 SELECT emissions, child_totalemi + emissions as new_Totalemi
-                  FROM get_totalemi, import_table
-                  WHERE get_totalemi.parents_partsid=:partsid AND import_table.partsid = :partsid
+                 SELECT cfp, child_totalcfp + cfp as new_Totalcfp
+                  FROM get_totalcfp, import_table
+                  WHERE get_totalcfp.parents_partsid=:partsid AND import_table.partsid = :partsid
              ),
             checks AS -- error code and check result
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM CO2Emissions
+                FROM cfpval
                 WHERE PartsID = :partsid
 
-                -- check value of emissions
+                -- check value of cfp
                 UNION
-                SELECT 4, emissions >= 0
+                SELECT 4, cfp >= 0
                 FROM new_quantity
 
-		            -- check value of emissions
+		            -- check value of cfp
                 UNION
-                SELECT 5, emissions < 1000
+                SELECT 5, cfp < 1000
                 FROM new_quantity
                 
-                -- check value of sum_child_emissions
+                -- check value of sum_child_cfp
                 UNION
-                SELECT 6, child_totalemi >= 0
-                FROM get_totalemi
+                SELECT 6, child_totalcfp >= 0
+                FROM get_totalcfp
 
-                -- dest new_Totalemi overflow
+                -- dest new_Totalcfp overflow
                 UNION
-                SELECT 7, new_Totalemi < (2::decimal ^ 256) / (10::decimal ^ 10)
+                SELECT 7, new_Totalcfp < (2::decimal ^ 256) / (10::decimal ^ 10)
                 FROM new_quantity
             ),
             inserted AS
             (
-                UPDATE CO2Emissions SET TotalEMISSIONS = 
+                UPDATE cfpval SET totalcfp = 
                 (
-                  SELECT new_Totalemi FROM new_quantity 
+                  SELECT new_Totalcfp FROM new_quantity 
                 )
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
