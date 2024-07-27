@@ -3,6 +3,7 @@ import commons as common
 def set_leafnode(partsid, peer):
     cfp = common.get_offchaindb_cfp(partsid, peer)
     common.update_data(partsid, cfp, peer)
+    common.update_wsv(partsid, cfp, peer)
 
 if __name__ == '__main__':
 
@@ -17,8 +18,8 @@ if __name__ == '__main__':
     common.IROHA_COMMANDexecutor('P03009', 'SetAccountDetail','postgresB')
     set_leafnode('P03010', 'postgresA')
     set_leafnode('P03011', 'postgresA')
-    common.IROHA_COMMANDexecutor('P03012', 'postgresC', 'P02004')
-    common.IROHA_COMMANDexecutor('P03013', 'postgresB', 'P02004')
+    common.IROHA_COMMANDexecutor('P03012', 'SetAccountDetail', 'postgresC')
+    common.IROHA_COMMANDexecutor('P03013', 'SetAccountDetail', 'postgresB')
     set_leafnode('P04014', 'postgresC')
     set_leafnode('P04015', 'postgresC')
     set_leafnode('P04016', 'postgresB')

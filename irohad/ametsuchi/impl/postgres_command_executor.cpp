@@ -1214,11 +1214,20 @@ namespace iroha {
                  FROM calcu
                  GROUP BY parents_partsid
             ),
+            get_child_totalcfp AS (
+                SELECT
+                 CASE child_totalcfp
+                  WHEN false THEN '0.0'
+                  ELSE child_totalcfp
+                 END AS child_totalcfp_
+                 FROM get_totalcfp
+                 WHERE parents_partsid = :partsid
+            ),
             new_quantity AS
              (
-                 SELECT cfp, child_totalcfp + cfp as new_Totalcfp
-                  FROM get_totalcfp, import_table
-                  WHERE get_totalcfp.parents_partsid=:partsid AND import_table.partsid = :partsid
+                 SELECT cfp, child_totalcfp_ + cfp as new_Totalcfp
+                  FROM import_table, get_child_totalcfp
+                  WHERE import_table.partsid = :partsid
              ),
             checks AS -- error code and check result
             (

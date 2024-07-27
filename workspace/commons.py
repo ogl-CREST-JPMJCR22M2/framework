@@ -1,5 +1,6 @@
 from iroha import Iroha, IrohaCrypto, IrohaGrpc
 import SQLexecutor as SQLexe
+from psycopg2 import sql
 
 iroha = Iroha('admin@test')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
@@ -25,7 +26,7 @@ def get_DataLink(partsid, peer):  #peer:executing peer
 def get_offchaindb_cfp(partsid, peer):  #peer:target peer
 
     SQL = sql.SQL("""
-            SELECT cfp FROM offchaindb_cfpval WHERE partsid = {PartsID};
+            SELECT CFP FROM offchainDB_CFPval WHERE partsid = {PartsID};
         """).format(
             PartsID = sql.Literal(partsid)
         )
@@ -60,6 +61,21 @@ def update_data(partsid, totalcfp, peer):  #peer:target peer
         )
 
     SQLexe.COMMANDexecutor_off(SQL, peer)
+
+#########d#######
+## UPDATE wsv ##
+################
+
+def update_wsv(partsid, totalcfp, peer):  #peer:target peer
+    SQL = sql.SQL("""
+            UPDATE cfpval set totalcfp = {totalcfp} 
+            WHERE partsid = {PartsID} ;
+        """).format(
+            PartsID = sql.Literal(partsid),
+            totalcfp = sql.Literal(totalcfp)
+        )
+
+    SQLexe.COMMANDexecutor_wsv(SQL, peer)
 
 
 #######################
