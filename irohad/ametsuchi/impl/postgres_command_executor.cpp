@@ -1391,10 +1391,10 @@ namespace iroha {
             (
                 WITH RECURSIVE calcu(child_partsid, parents_partsid, totalcfp) AS
                 (
-                  SELECT general_table.partsid, general_table.parents_partsid, general_table.cfp 
+                  SELECT general_table.partsid, general_table.parents_partsid, general_table.totalcfp
                    FROM general_table
                   UNION ALL
-                  SELECT general_table.partsid, calcu.parents_partsid, cfp
+                  SELECT general_table.partsid, calcu.parents_partsid, general_table.totalcfp
                    FROM general_table, calcu
                    WHERE general_table.parents_partsid = calcu.child_partsid 
                     AND calcu.child_partsid != :partsid
