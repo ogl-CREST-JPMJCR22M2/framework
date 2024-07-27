@@ -4,13 +4,11 @@ from psycopg2 import sql
 iroha = Iroha('admin@test')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
-
-
 #######################
 ## Run iroha command ##
 #######################
 
-def IROHA_COMMANDexecutor(partsid, peer): #peer:executing peer(account)
+def IROHA_COMMANDexecutor(partsid, cmd, peer): #peer:executing peer(account)
     
     if peer[8:] == 'A':
         net = IrohaGrpc('192.168.32.2:50051')
@@ -21,9 +19,9 @@ def IROHA_COMMANDexecutor(partsid, peer): #peer:executing peer(account)
 
     tx = iroha.transaction(
         [iroha.command(
-            'SetAccountDetail',
-                account_id = 'admin@test',
-                parts_id = partsid
+            cmd,
+            account_id = 'admin@test',
+            parts_id = partsid
         )]
     )
 
@@ -37,5 +35,6 @@ def IROHA_COMMANDexecutor(partsid, peer): #peer:executing peer(account)
 if __name__ == '__main__':
 
     partsid = 'P01001'
-    #IROHA_COMMANDexecutor(partsid, 'postgresA')
+    #IROHA_COMMANDexecutor(partsid,'SetAccountDetail', 'postgresA')
+    IROHA_COMMANDexecutor(partsid,'SubtractAssetQuantity', 'postgresA')
     
