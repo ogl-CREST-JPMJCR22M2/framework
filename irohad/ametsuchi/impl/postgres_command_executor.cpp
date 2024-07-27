@@ -1166,32 +1166,32 @@ namespace iroha {
           WITH %s
             new_quantity AS
              (
-                 SELECT :new_emissions::decimal as newEmissions,
-                    :sum_child_emissions::decimal as sumChildEmissions,
-			              :new_emissions::decimal + :sum_child_emissions::decimal as value
-                 FROM CO2Emissions
+                 SELECT :new_CFP::decimal as newCFP,
+                    :sum_child_CFP::decimal as sumChildCFP,
+			              :new_CFP::decimal + :sum_child_CFP::decimal as value
+                 FROM CFPval
                  WHERE PartsID=:partsid 
              ),
             checks AS -- error code and check result
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM CO2Emissions
+                FROM CFPval
                 WHERE PartsID = :partsid
 
-                -- check value of new_emissions
+                -- check value of new_CFP
                 UNION
-                SELECT 4, newEmissions >= 0
+                SELECT 4, newCFP >= 0
                 FROM new_quantity
 
-		-- check value of new_emissions
+		-- check value of new_CFP
                 UNION
-                SELECT 5, newEmissions < 1000
+                SELECT 5, newCFP < 1000
                 FROM new_quantity
 		
-		-- check value of sum_child_emissions
+		-- check value of sum_child_CFP
                 UNION
-                SELECT 6, sumChildEmissions >= 0
+                SELECT 6, sumChildCFP >= 0
                 FROM new_quantity
 
                 -- dest value overflow
@@ -1202,7 +1202,7 @@ namespace iroha {
             ),
 	    inserted AS
             (
-                UPDATE CO2Emissions SET TotalEMISSIONS = 
+                UPDATE CFPval SET TotalCFP = 
                 	( SELECT value FROM new_quantity )
                 WHERE PartsID=:partsid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
@@ -1945,8 +1945,8 @@ namespace iroha {
         bool do_validation) {
       auto &account_id = command.accountId();
       auto &parts_id = command.partsId();
-      auto new_emissions = command.newEmissions().toStringRepr();
-      auto sum_child_emissions = command.sumChildEmissions().toStringRepr();
+      auto new_CFP = command.newEmissions().toStringRepr();
+      auto sum_child_CFP = command.sumChildEmissions().toStringRepr();
 
       StatementExecutor executor(set_account_detail_statements_,
                                  do_validation,
@@ -1961,8 +1961,8 @@ namespace iroha {
       }
       executor.use("target", account_id);
       executor.use("partsid", parts_id);
-      executor.use("new_emissions", new_emissions);
-      executor.use("sum_child_emissions", sum_child_emissions);
+      executor.use("new_CFP", new_CFP);
+      executor.use("sum_child_CFP", sum_child_CFP);
 
       return executor.execute();
     }
