@@ -1383,7 +1383,7 @@ namespace iroha {
             import_table AS 
             (
                 SELECT * FROM dblink(
-                    'host='+:datalink+'port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
+                    'host=' || (select DataLink from datalink) || ' port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
                     'SELECT partsid, cfp FROM offchaindb_cfpval') 
                     AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
              ),
@@ -2076,7 +2076,7 @@ namespace iroha {
         bool do_validation) {
       auto &account_id = command.accountId();
       auto &parts_id = command.partsId();
-      auto datalink = 'postgresA';
+      //auto datalink = 'postgresA';
 
       StatementExecutor executor(subtract_asset_quantity_statements_,
                                  do_validation,
@@ -2091,7 +2091,7 @@ namespace iroha {
       }
       executor.use("target", account_id);
       executor.use("partsid", parts_id);
-      executor.use("datalink", datalink);
+      //executor.use("datalink", datalink);
 
       return executor.execute();
     }
