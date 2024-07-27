@@ -1375,15 +1375,10 @@ namespace iroha {
           sql_,
           R"(
           WITH %s
-            datalink AS
-            (
-                SELECT DataLink FROM PartsInfo
-                WHERE PartsID = :partsid
-            ),
             import_table AS 
             (
                 SELECT * FROM dblink(
-                    'host=' || (select DataLink from datalink) || ' port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
+                    'host=' || (SELECT DataLink FROM PartsInfo WHERE PartsID = :partsid) || ' port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
                     'SELECT partsid, cfp FROM offchaindb_cfpval') 
                     AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
              ),
@@ -1396,10 +1391,10 @@ namespace iroha {
             (
                 WITH RECURSIVE calcu(child_partsid, parents_partsid, totalcfp) AS
                 (
-                  SELECT general_table.partsid, general_table.parents_partsid, general_table.totalcfp 
+                  SELECT general_table.partsid, general_table.parents_partsid, general_table.cfp 
                    FROM general_table
                   UNION ALL
-                  SELECT general_table.partsid, calcu.parents_partsid, general_table.totalcfp
+                  SELECT general_table.partsid, calcu.parents_partsid, cfp
                    FROM general_table, calcu
                    WHERE general_table.parents_partsid = calcu.child_partsid 
                     AND calcu.child_partsid != :partsid
