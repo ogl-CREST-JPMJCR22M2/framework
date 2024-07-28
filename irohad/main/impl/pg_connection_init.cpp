@@ -265,37 +265,7 @@ CREATE TABLE CFPval (
 
 CREATE extension dblink;
 
-INSERT INTO CFPval VALUES
-  ('P01001', '0.0'), 
-  ('P02002', '0.0'),
-  ('P02003', '0.0'),
-  ('P02004', '0.0'),
-  ('P03005', '0.0'),
-  ('P03006', '0.0'),
-  ('P03007', '0.0'),
-  ('P03008', '0.0'),
-  ('P03009', '0.0'),
-  ('P03010', '0.0'),
-  ('P03011', '0.0'),
-  ('P03012', '0.0'),
-  ('P03013', '0.0'),
-  ('P04014', '0.0'),
-  ('P04015', '0.0'),
-  ('P04016', '0.0'),
-  ('P04017', '0.0'),
-  ('P04018', '0.0'),
-  ('P04019', '0.0'),
-  ('P04020', '0.0'),
-  ('P04021', '0.0'),
-  ('P04022', '0.0'),
-  ('P04023', '0.0'),
-  ('P04024', '0.0'),
-  ('P04025', '0.0'),
-  ('P04026', '0.0'),
-  ('P04027', '0.0'),
-  ('P04028', '0.0'),
-  ('P04029', '0.0'),
-  ('P04030', '0.0');
+COPY CFPval (partsid, totalcfp) FROM './dataset/data_10000.csv' WITH CSV HEADER;
 
   CREATE TABLE Partsinfo (
     PartsID CHARACTER varying(288) NOT NULL,
@@ -304,37 +274,7 @@ INSERT INTO CFPval VALUES
     PRIMARY KEY (PartsID)
 );
 
-INSERT INTO Partsinfo VALUES
-  ('P01001', 'postgresA', NULL), 
-  ('P02002', 'postgresA', 'P01001'),
-  ('P02003', 'postgresA', 'P01001'),
-  ('P02004', 'postgresA', 'P01001'),
-  ('P03005', 'postgresA', 'P02002'),
-  ('P03006', 'postgresC', 'P02002'),
-  ('P03007', 'postgresB', 'P02002'),
-  ('P03008', 'postgresC', 'P02003'),
-  ('P03009', 'postgresB', 'P02003'),
-  ('P03010', 'postgresA', 'P02004'),
-  ('P03011', 'postgresA', 'P02004'),
-  ('P03012', 'postgresC', 'P02004'),
-  ('P03013', 'postgresB', 'P02004'),
-  ('P04014', 'postgresC', 'P03005'),
-  ('P04015', 'postgresC', 'P03005'),
-  ('P04016', 'postgresB', 'P03005'),
-  ('P04017', 'postgresB', 'P03005'),
-  ('P04018', 'postgresC', 'P03006'),
-  ('P04019', 'postgresC', 'P03006'),
-  ('P04020', 'postgresC', 'P03008'),
-  ('P04021', 'postgresC', 'P03008'),
-  ('P04022', 'postgresC', 'P03008'),
-  ('P04023', 'postgresB', 'P03009'),
-  ('P04024', 'postgresB', 'P03009'),
-  ('P04025', 'postgresC', 'P03012'),
-  ('P04026', 'postgresC', 'P03012'),
-  ('P04027', 'postgresC', 'P03012'),
-  ('P04028', 'postgresC', 'P03013'),
-  ('P04029', 'postgresC', 'P03013'),
-  ('P04030', 'postgresB', 'P03013');
+COPY Partsinfo (partsid, datalink, parents_partsid) FROM './dataset/data_10000.csv' WITH CSV HEADER;
 
 CREATE TABLE role (
     role_id character varying(32),
