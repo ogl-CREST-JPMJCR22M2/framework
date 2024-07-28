@@ -27,7 +27,7 @@ try:
                     PRIMARY KEY (PartsID)
             );
 
-            COPY offchainDB_CFPval (partsid, totalcfp, cfp) FROM '../../irohad/main/impldataset/A10000.csv' WITH CSV HEADER;
+            COPY offchainDB_CFPval (partsid, totalcfp, cfp) FROM '/root/framework_/dataset/A10000.csv' WITH CSV HEADER;
             """
         )
 finally:

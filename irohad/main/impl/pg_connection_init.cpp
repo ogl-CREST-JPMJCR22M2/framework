@@ -265,7 +265,7 @@ CREATE TABLE CFPval (
 
 CREATE extension dblink;
 
-COPY CFPval (partsid, totalcfp) FROM './dataset/data_10000.csv' WITH CSV HEADER;
+COPY CFPval (partsid, totalcfp) FROM '/root/framework_/dataset/data_10000.csv' WITH CSV HEADER;
 
   CREATE TABLE Partsinfo (
     PartsID CHARACTER varying(288) NOT NULL,
@@ -274,7 +274,7 @@ COPY CFPval (partsid, totalcfp) FROM './dataset/data_10000.csv' WITH CSV HEADER;
     PRIMARY KEY (PartsID)
 );
 
-COPY Partsinfo (partsid, datalink, parents_partsid) FROM './dataset/data_10000.csv' WITH CSV HEADER;
+COPY Partsinfo (partsid, datalink, parents_partsid) FROM '/root/framework_/dataset/data_10000.csv' WITH CSV HEADER;
 
 CREATE TABLE role (
     role_id character varying(32),
