@@ -1215,13 +1215,12 @@ namespace iroha {
                  GROUP BY parents_partsid
             ),
             get_child_totalcfp AS (
-                SELECT
-                 CASE child_totalcfp
-                  WHEN false THEN '0.0'
-                  ELSE child_totalcfp
-                 END AS child_totalcfp_
-                 FROM get_totalcfp
-                 WHERE parents_partsid = :partsid
+                SELECT CASE
+                 WHEN EXISTS (SELECT child_totalcfp FROM get_totalcfp WHERE parents_partsid = :partsid)
+                  THEN (SELECT child_totalcfp FROM get_totalcfp WHERE parents_partsid = :partsid)
+                  ELSE '0.0'
+                  END AS child_totalcfp_
+                FROM get_totalcfp
             ),
             new_quantity AS
              (
