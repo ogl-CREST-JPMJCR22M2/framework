@@ -33,6 +33,20 @@ def get_offchaindb_cfp(partsid, peer):  #peer:target peer
     return str(SQLexe.QUERYexecutor_off(SQL, peer)[0][0])
 
 
+##################################
+## Get totalcfp from offchainDB ##
+##################################
+
+def get_offchaindb_totalcfp(partsid, peer):  #peer:target peer
+
+    SQL = sql.SQL("""
+            SELECT totalCFP FROM offchainDB_CFPval WHERE partsid = {PartsID};
+        """).format(
+            PartsID = sql.Literal(partsid)
+        )
+    return str(SQLexe.QUERYexecutor_off(SQL, peer)[0][0])
+
+
 ###########################
 ## Get Totalcfp from wsv ##
 ###########################
@@ -118,5 +132,5 @@ if __name__ == '__main__':
 
     partsid = 'P01001'
     #IROHA_COMMANDexecutor(partsid,'SetAccountDetail', 'postgresA')
-    IROHA_COMMANDexecutor(partsid,'SubtractAssetQuantity', 'postgresA')
+    #IROHA_COMMANDexecutor(partsid,'SubtractAssetQuantity', 'postgresA')
     
