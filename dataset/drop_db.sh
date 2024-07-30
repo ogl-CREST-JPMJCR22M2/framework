@@ -6,7 +6,7 @@ datalink=("postgresA" "postgresB" "postgresC")
 
 for datalink in ${datalink[@]}; do
     export PGPASSWORD=mysecrestpassword
-    psql -U postgres -d iroha_default -h $datalink -c "drop database irofa_default;"
+    psql -U postgres -d offchaindb -h $datalink -c "drop database iroha_default;"
 done
 
 exit $?

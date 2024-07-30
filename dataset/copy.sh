@@ -6,9 +6,9 @@ datalink=("postgresA" "postgresB" "postgresC")
 
 for datalink in ${datalink[@]}; do
 
-    if [ $datalink -eq "postgresA"]; then
+    if $datalink -eq "postgresA" ; then
         psql -U postgres -d offchaindb -h $datalink -c "\copy offchaindb_cfpval (partsid, totalcfp, cfp) from '/root/dataset/A10000.csv' with csv header;"
-    elif [ $datalink -eq "postgresB"]; then
+    elif $datalink -eq "postgresB" ; then
         psql -U postgres -d offchaindb -h $datalink -c "\copy offchaindb_cfpval (partsid, totalcfp, cfp) from '/root/dataset/B10000.csv' with csv header;"
     else
         psql -U postgres -d offchaindb -h $datalink -c "\copy offchaindb_cfpval (partsid, totalcfp, cfp) from '/root/dataset/C10000.csv' with csv header;"

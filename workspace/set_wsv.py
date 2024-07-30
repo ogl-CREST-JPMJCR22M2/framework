@@ -2,8 +2,9 @@ import commons as common
     
 def set_leafnode(partsid, peer):
     cfp = common.get_offchaindb_cfp(partsid, peer)
-    common.update_data(partsid, cfp, peer)
-    common.update_wsv(partsid, cfp, peer)
+    datalink = get_DataLink(partsid, peer)
+    common.update_data(partsid, cfp, datalink)
+    common.update_wsv(partsid, cfp, datalink)
 
 if __name__ == '__main__':
 
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     #set_leafnode('P03007','postgresB')
     #common.IROHA_COMMANDexecutor('P03008', 'SetAccountDetail','postgresC')
     #common.IROHA_COMMANDexecutor('P03009', 'SetAccountDetail','postgresB')
-    common.IROHA_COMMANDexecutor('P03010', 'SetAccountDetail','postgresA') 
+    #common.IROHA_COMMANDexecutor('P03010', 'SetAccountDetail','postgresA') 
     ##set_leafnode('P03010', 'postgresA')
     ##set_leafnode('P03011', 'postgresA')
     #common.IROHA_COMMANDexecutor('P03012', 'SetAccountDetail', 'postgresC')
@@ -38,4 +39,15 @@ if __name__ == '__main__':
     #set_leafnode('P04028', 'postgresC')
     #set_leafnode('P04029', 'postgresC')
     #set_leafnode('P04030', 'postgresB')
+
+    start = time.time()
+
+    for i in range(1, 3334):
+        
+        part_id = f'P{i:05d}'
+        common.IROHA_COMMANDexecutor(part_id, 'SetAccountDetail','postgresA')
+    
+    t = time.time() - start
+    print(t)
+
     
