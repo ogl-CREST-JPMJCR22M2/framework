@@ -26,8 +26,6 @@ try:
                     CFP DECIMAL NOT NULL ,
                     PRIMARY KEY (PartsID)
             );
-
-            COPY offchainDB_CFPval (partsid, totalcfp, cfp) FROM '/root/framework_/dataset/A10000.csv' WITH CSV HEADER;
             """
         )
 finally:
