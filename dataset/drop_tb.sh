@@ -1,11 +1,11 @@
 #!/bin/bash
 
-export PGPASSWORD=mysecrestpassword
+export PGPASSWORD=mysecretpassword
 
-dabalink=("postgresA" "postgresB" "postgresC")
+datalink=("postgresA" "postgresB" "postgresC")
 
-for dabalink in ${dabalink[@]}; do
-    psql -U postgres -d postgres -h $dabalink -c "drop table offchaindb_cfpval;"
+for datalink in ${datalink[@]}; do
+    psql -U postgres -d postgres -h $datalink -c "drop table offchaindb_cfpval;"
 done
 
 exit $?

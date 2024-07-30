@@ -1,13 +1,13 @@
 #!/bin/bash
 
-export PGPASSWORD=mysecrestpassword
+export PGPASSWORD=mysecretpassword
 
-dabalink=("postgresA" "postgresB" "postgresC")
+datalink=("postgresA" "postgresB" "postgresC")
 
-for dabalink in ${dabalink[@]}; do
-    psql -U postgres -d offchaindb -h $dabalink -c "delete from offchaindb_cfpval;"
-    psql -U postgres -d iroha_default -h $dabalink -c "delete from cfpval;"
-    psql -U postgres -d iroha_default -h $dabalink -c "delete from partsinfo;"
+for datalink in ${datalink[@]}; do
+    psql -U postgres -d offchaindb -h $datalink -c "delete from offchaindb_cfpval;"
+    psql -U postgres -d iroha_default -h $datalink -c "delete from cfpval;"
+    psql -U postgres -d iroha_default -h $datalink -c "delete from partsinfo;"
 done
 
 exit $?

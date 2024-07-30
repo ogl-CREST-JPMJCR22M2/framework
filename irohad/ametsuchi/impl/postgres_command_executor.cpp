@@ -1217,8 +1217,8 @@ namespace iroha {
             new_quantity AS
              (
                  SELECT cfp, child_totalcfp + cfp as new_Totalcfp
-                  FROM import_table
-                  WHERE import_table.partsid = :partsid
+                  FROM get_totalcfp, import_table
+                  WHERE get_totalcfp.parents_partsid=:partsid AND import_table.partsid = :partsid
              ),
             checks AS -- error code and check result
             (
