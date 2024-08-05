@@ -10,7 +10,7 @@ data.append(['partsid', 'datalink', 'cfp', 'parents_partsid', 'totalcfp'])
 
 values = ['postgresA', 'postgresB', 'postgresC']
 j = 1
-for i in range(1, 10001):
+for i in range(1, 30001):
     part_id = f'P{i:05d}'  # 'P' + 5桁の連番
     second_value = random.choice(values)  # ランダムに選択
     third_value = round(random.uniform(0.0, 10.0), 3)  # 0.0から10.0の範囲の数値、有効桁数4
@@ -22,7 +22,7 @@ for i in range(1, 10001):
         if (i-1) % 3 == 0:
             j += 1
 
-    if i < 3334:
+    if i < 10000:
         fifth_valure = 0.0
     else :
         fifth_valure = third_value
