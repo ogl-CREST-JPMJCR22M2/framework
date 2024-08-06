@@ -1204,11 +1204,11 @@ namespace iroha {
                 (
                   SELECT general_table.partsid, general_table.parents_partsid, general_table.cfp 
                    FROM general_table
+                   WHERE general_table.parents_partsid = :partsid
                   UNION ALL
                   SELECT general_table.partsid, calcu.parents_partsid, cfp
                    FROM general_table, calcu
                    WHERE general_table.parents_partsid = calcu.child_partsid 
-                    AND calcu.child_partsid != :partsid
                 )
                 SELECT parents_partsid, SUM(totalcfp) AS child_totalcfp
                  FROM calcu

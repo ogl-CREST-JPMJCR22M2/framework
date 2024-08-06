@@ -33,10 +33,19 @@ def quick_validation(partsid, peer):
 
 if __name__ == '__main__':
 
-    start = time.time()
+    time_data = []
+    partsid = 'P00001'
+    filename = partsid
 
-    partsid = 'P01001'
-    naive_validation(partsid,'postgresA')
+    for n in range(100):
+        start = time.time()
+        naive_validation(partsid,'postgresA')
 
-    t = time.time() - start
-    print(t)
+        t = time.time() - start
+        time_data.append([t])
+
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(time_data)
+    
+    print(f'Data has been written to {filename}')
