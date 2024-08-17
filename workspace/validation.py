@@ -1,5 +1,7 @@
 import commons as common
 import time
+import csv
+import psutil
 
 def naive_validation(partsid, peer):
 
@@ -30,10 +32,25 @@ def quick_validation(partsid, peer):
     #else :
     #    print("Validation Successful")
 
-
 if __name__ == '__main__':
 
     time_data = []
+    cpu_list = []
+    partsid = ['P09841','P03280','P01093','P00364','P00121', 'P00040','P00013', 'P00001']
+    filename = partsid
+
+    for id in partsid:
+        time_data.append([partsid, partsid])
+        for n in range(100):
+            start = time.time()
+            naive_validation(partsid,'postgresA')
+
+            t = time.time() - start
+            virtual_memory_usage = psutil.virtual_memory().percent
+            time_data.append([t, virtual_memory_usage])
+            #time.sleep(interval)
+
+    """
     partsid = 'P00001'
     filename = partsid
 
@@ -43,6 +60,7 @@ if __name__ == '__main__':
 
         t = time.time() - start
         time_data.append([t])
+    """
 
     with open(filename, 'w', newline='') as file:
         writer = csv.writer(file)
