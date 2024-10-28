@@ -432,7 +432,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // check if at least one block is available in the ledger
+    // 元帳に少なくとも1つのブロックがあるかチェックする
     auto block_query = irohad->storage->getBlockQuery();
     if (not block_query) {
       log->error("Cannot create BlockQuery");
@@ -520,7 +520,7 @@ int main(int argc, char *argv[]) {
     daemon_status_notifier->notify(
         ::iroha::utility_service::Status::kTermination);
 
-    // We do not care about shutting down grpc servers
+    // grpcサーバーのシャットダウンは気にしない
     // They do all necessary work in their destructors
     log->info("shutting down...");
 

@@ -36,19 +36,17 @@ if __name__ == '__main__':
 
     time_data = []
     cpu_list = []
-    partsid = ['P09841','P03280','P01093','P00364','P00121', 'P00040','P00013', 'P00001']
-    filename = partsid
+    partsid = ['P09841','P03280','P01093','P00364','P00121', 'P00040','P00013', 'P00004', 'P00001']
+    filename = 'results_naive'
 
-    for id in partsid:
-        time_data.append([partsid, partsid])
+    for pid in partsid:
+        time_data.append([pid, pid])
         for n in range(100):
             start = time.time()
-            naive_validation(partsid,'postgresA')
+            naive_validation(pid,'postgresA')
 
             t = time.time() - start
-            virtual_memory_usage = psutil.virtual_memory().percent
-            time_data.append([t, virtual_memory_usage])
-            #time.sleep(interval)
+            time_data.append([t])
 
     """
     partsid = 'P00001'

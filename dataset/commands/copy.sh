@@ -15,3 +15,5 @@ for datalink in ${datalink[@]}; do
 done
 
 exit $?
+
+results/30000/Acfpval_30000.csv
