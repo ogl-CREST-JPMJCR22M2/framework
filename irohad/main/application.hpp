@@ -7,8 +7,11 @@
 #define IROHA_APPLICATION_HPP
 
 #include <optional>
-//#include <stdio.h>
 #include <time.h>
+#include <time.h>
+#include <stdio.h>
+#include <dos.h>
+#include <conio.h>
 
 #include "consensus/consensus_block_cache.hpp"
 #include "consensus/gate_object.hpp"
@@ -185,12 +188,12 @@ class Irohad {
 
  protected:
   // -----------------------| component initialization |------------------------
+  clock_t start = time(NULL);
+  //printf("start\n");
+
   virtual RunResult initStorage(
       iroha::StartupWsvDataPolicy startup_wsv_data_policy,
       iroha::StorageType type);
-
-  clock_t start = clock();
-  //printf("start\n");
 
   RunResult initTlsCredentials();
 
@@ -247,9 +250,9 @@ class Irohad {
    */
   virtual RunResult initWsvRestorer();
 
-  clock_t end = clock();
-  const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000.0;
-  //printf("time %lf[ms]\n", time);
+  clock_t end = time(NULL);
+  const double time = difftime(end,start);
+  printf("time %lf[ms]\n", time);
 
   // constructor dependencies
   IrohadConfig const config_;
