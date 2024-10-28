@@ -7,8 +7,8 @@
 #define IROHA_APPLICATION_HPP
 
 #include <optional>
-#include <time.h>
-#include <stdio.h>
+#include <iostream>
+#include <chrono>
 
 #include "consensus/consensus_block_cache.hpp"
 #include "consensus/gate_object.hpp"
@@ -185,8 +185,12 @@ class Irohad {
 
  protected:
   // -----------------------| component initialization |------------------------
-  clock_t start = time(NULL);
-  //printf("start\n");
+  std::chrono::system_clock::time_point  start, end;
+  std::time_t time_stamp;
+ 
+  start = std::chrono::system_clock::now(); // 計測開始時間
+  time_stamp = std::chrono::system_clock::to_time_t(start);
+  std::cout << std::ctime(&time_stamp);
 
   virtual RunResult initStorage(
       iroha::StartupWsvDataPolicy startup_wsv_data_policy,
@@ -247,9 +251,12 @@ class Irohad {
    */
   virtual RunResult initWsvRestorer();
 
-  clock_t end = time(NULL);
-  const double time = difftime(end,start);
-  printf("time %lf[ms]\n", time);
+  end = std::chrono::system_clock::now();  // 計測終了時間
+  auto time = end - start; // 処理に要した時間
+ 
+  // 処理に要した時間をミリ秒に変換
+  auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
+  std::cout << msec << " msec" << std::endl;
 
   // constructor dependencies
   IrohadConfig const config_;
