@@ -27,6 +27,8 @@
 #include "main/subscription_fwd.hpp"
 #include "torii/tls_params.hpp"
 
+using namespace std;
+
 namespace google::protobuf {
   class Empty;
 }
@@ -185,11 +187,8 @@ class Irohad {
 
  protected:
   // -----------------------| component initialization |------------------------
-  std::chrono::system_clock::time_point  start, end;
-  std::time_t time_stamp;
- 
-  start = std::chrono::system_clock::now(); // 計測開始時間
-  time_stamp = std::chrono::system_clock::to_time_t(start);
+  std::chrono::system_clock::time_point start = std::chrono::system_clock::now(); // 計測開始時間
+  std::time_t time_stamp = std::chrono::system_clock::to_time_t(start);
   std::cout << std::ctime(&time_stamp);
 
   virtual RunResult initStorage(
@@ -251,7 +250,7 @@ class Irohad {
    */
   virtual RunResult initWsvRestorer();
 
-  end = std::chrono::system_clock::now();  // 計測終了時間
+  std::chrono::system_clock::time_point end = std::chrono::system_clock::now();  // 計測終了時間
   auto time = end - start; // 処理に要した時間
  
   // 処理に要した時間をミリ秒に変換
