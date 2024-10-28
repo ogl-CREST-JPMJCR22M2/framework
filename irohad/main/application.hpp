@@ -8,9 +8,7 @@
 
 #include <optional>
 #include <time.h>
-#include <time.h>
 #include <stdio.h>
-#include <conio.h>
 
 #include "consensus/consensus_block_cache.hpp"
 #include "consensus/gate_object.hpp"
