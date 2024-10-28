@@ -7,7 +7,7 @@
 #define IROHA_APPLICATION_HPP
 
 #include <optional>
-#include <stdio.h>
+//#include <stdio.h>
 #include <time.h>
 
 #include "consensus/consensus_block_cache.hpp"
@@ -190,7 +190,7 @@ class Irohad {
       iroha::StorageType type);
 
   clock_t start = clock();
-  printf("start\n");
+  //printf("start\n");
 
   RunResult initTlsCredentials();
 
@@ -249,7 +249,7 @@ class Irohad {
 
   clock_t end = clock();
   const double time = static_cast<double>(end - start) / CLOCKS_PER_SEC * 1000.0;
-  printf("time %lf[ms]\n", time);
+  //printf("time %lf[ms]\n", time);
 
   // constructor dependencies
   IrohadConfig const config_;
