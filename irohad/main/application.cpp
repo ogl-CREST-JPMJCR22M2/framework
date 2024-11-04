@@ -11,6 +11,8 @@
 #include <rapidjson/writer.h>
 #include <boost/filesystem.hpp>
 #include <optional>
+#include <iostream>
+#include <chrono>
 
 #include "ametsuchi/impl/pool_wrapper.hpp"
 #include "ametsuchi/impl/rocksdb_common.hpp"
@@ -464,7 +466,10 @@ void Irohad::printDbStatus() {
   }
 }
 
+
 Irohad::RunResult Irohad::restoreWsv() {
+  std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
+  log_->info("Timer Start NOW!");
   IROHA_EXPECTED_TRY_GET_VALUE(
       ledger_state,
       wsv_restorer_->restoreWsv(
@@ -476,6 +481,9 @@ Irohad::RunResult Irohad::restoreWsv() {
     return iroha::expected::makeError<std::string>(
         "Have no peers in WSV after restoration!");
   }
+  std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+  double execTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime-startTime).count();
+  log_->info("Timer End NOW! Time : {}", execTime);
   return {};
 }
 

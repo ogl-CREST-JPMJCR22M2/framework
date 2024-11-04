@@ -130,7 +130,8 @@ def IROHA_COMMANDexecutor(partsid, cmd, peer): #peer:executing peer
 
 if __name__ == '__main__':
 
-    partsid = 'P01001'
+    partsid = 'P00001'
+    IROHA_COMMANDexecutor(partsid, 'SetAccountDetail','postgresA')
     #IROHA_COMMANDexecutor(partsid,'SetAccountDetail', 'postgresA')
     #IROHA_COMMANDexecutor(partsid,'SubtractAssetQuantity', 'postgresA')
     
