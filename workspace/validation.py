@@ -36,9 +36,13 @@ if __name__ == '__main__':
 
     time_data = []
     cpu_list = []
-    partsid = ['P09841','P03280','P01093','P00364','P00121', 'P00040','P00013', 'P00004', 'P00001']
+    #partsid = ['P09841','P03280','P01093','P00364','P00121', 'P00040','P00013', 'P00004', 'P00001']
+    partsid = 'P09841'
     filename = 'results_naive'
 
+    naive_validation(partsid,'postgresA')    
+
+    """
     for pid in partsid:
         time_data.append([pid, pid])
         for n in range(100):
@@ -48,7 +52,7 @@ if __name__ == '__main__':
             t = time.time() - start
             time_data.append([t])
 
-    """
+    
     partsid = 'P00001'
     filename = partsid
 
@@ -58,10 +62,11 @@ if __name__ == '__main__':
 
         t = time.time() - start
         time_data.append([t])
-    """
+    
 
     with open(filename, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(time_data)
     
     print(f'Data has been written to {filename}')
+    """
