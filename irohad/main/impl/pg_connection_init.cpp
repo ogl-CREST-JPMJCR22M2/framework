@@ -258,10 +258,12 @@ CREATE TABLE top_block_info (
 );
 
 CREATE TABLE CFPval (
-    PartsID CHARACTER varying(288) NOT NULL,
+    partsid CHARACTER varying(288) NOT NULL,
     TotalCFP DECIMAL NOT NULL ,
-    PRIMARY KEY (PartsID)
+    PRIMARY KEY (partsid),
 );
+
+CREATE INDEX partsindex ON CFPval (partsid);
 
 INSERT INTO cfpval (partsid, totalcfp) VALUES 
     ('P00001', '0.0'),
@@ -30274,6 +30276,8 @@ CREATE TABLE Partsinfo (
     Parents_PartsID CHARACTER varying(288),
     PRIMARY KEY (PartsID)
 );
+
+CREATE INDEX partsindex ON partsinfo (partsid);
 
 INSERT INTO partsinfo (partsid, datalink, parents_partsid) VALUES 
     ('P00001', 'postgresA', 'NULL'),
