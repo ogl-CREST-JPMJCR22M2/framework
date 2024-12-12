@@ -260,10 +260,10 @@ CREATE TABLE top_block_info (
 CREATE TABLE CFPval (
     partsid CHARACTER varying(288) NOT NULL,
     TotalCFP DECIMAL NOT NULL ,
-    PRIMARY KEY (partsid),
+    PRIMARY KEY (partsid)
 );
 
-CREATE INDEX partsindex ON CFPval (partsid);
+CREATE INDEX index_cfp ON CFPval (partsid);
 
 INSERT INTO cfpval (partsid, totalcfp) VALUES 
     ('P00001', '0.0'),
@@ -30267,7 +30267,6 @@ INSERT INTO cfpval (partsid, totalcfp) VALUES
     ('P29999', '8.057'),
     ('P30000', '9.243');
 
-
 CREATE extension dblink;
 
 CREATE TABLE Partsinfo (
@@ -30277,7 +30276,7 @@ CREATE TABLE Partsinfo (
     PRIMARY KEY (PartsID)
 );
 
-CREATE INDEX partsindex ON partsinfo (partsid);
+CREATE INDEX index_info ON partsinfo (partsid);
 
 INSERT INTO partsinfo (partsid, datalink, parents_partsid) VALUES 
     ('P00001', 'postgresA', 'NULL'),
@@ -60280,7 +60279,6 @@ INSERT INTO partsinfo (partsid, datalink, parents_partsid) VALUES
     ('P29998', 'postgresB', 'P09999'),
     ('P29999', 'postgresC', 'P10000'),
     ('P30000', 'postgresA', 'P10000');
-
 
 CREATE TABLE role (
     role_id character varying(32),
