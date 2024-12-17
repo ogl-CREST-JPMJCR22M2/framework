@@ -30,7 +30,7 @@ def get_offchaindb_cfp(partsid, peer):  #peer:target peer
         """).format(
             PartsID = sql.Literal(partsid)
         )
-    return str(SQLexe.QUERYexecutor_off(SQL, peer)[0][0])
+    return SQLexe.QUERYexecutor_off(SQL, peer)[0][0]
 
 
 ##################################
