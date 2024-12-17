@@ -1166,17 +1166,17 @@ namespace iroha {
           WITH %s
             get_childparts AS
             (
-                WITH RECURSIVE calcu(child_partsid, parents_partsid) AS
+                WITH RECURSIVE calcu(child_partsid, parents_partsid, duplicates) AS
                 (
-                    SELECT PartsInfo.partsid, PartsInfo.parents_partsid 
+                    SELECT PartsInfo.partsid, PartsInfo.parents_partsid, duplicates
                     FROM PartsInfo
                     WHERE PartsInfo.parents_partsid = :partsid
                     UNION ALL
-                    SELECT PartsInfo.partsid, calcu.parents_partsid
+                    SELECT PartsInfo.partsid, calcu.parents_partsid, PartsInfo.duplicates
                     FROM PartsInfo, calcu
                     WHERE PartsInfo.parents_partsid = calcu.child_partsid 
                 )
-                SELECT child_partsid
+                SELECT child_partsid, duplicates
                 FROM calcu
             ),
             import_table AS (
@@ -1197,9 +1197,9 @@ namespace iroha {
             ),
             get_totalcfp AS
             (   
-                SELECT sum(cfp) as child_totalcfp
+                SELECT sum(cfp * duplicates) as child_totalcfp
                 FROM import_table INNER JOIN get_childparts ON get_childparts.child_partsid = import_table.partsid
-            ),     
+            ), 
             new_quantity AS
              (
                  SELECT cfp, child_totalcfp + cfp as new_Totalcfp
