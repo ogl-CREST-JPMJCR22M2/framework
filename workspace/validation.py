@@ -38,7 +38,7 @@ def simplified_validation(partsid, peer):
                 SELECT * FROM cfpval
                 NATURAL RIGHT JOIN PartsInfo
             )
-        SELECT parents_partsid, SUM(totalcfp) AS child_totalcfp
+        SELECT parents_partsid, SUM(totalcfp * duplicates) AS child_totalcfp
             FROM general_table
             WHERE parents_partsid = {partsid}
             GROUP BY parents_partsid;
@@ -56,8 +56,6 @@ def simplified_validation(partsid, peer):
     # if new_totalcfp > (2 ^ 256) / (10 ^ 10):
     #     print("Faild Stateful Validation (overflow new totalcfp)")
     #    return 0
-
-    print(new_totalcfp)
         
     if float(new_totalcfp) != float(offdb_totacfp):
         print("Validation Failed")
@@ -67,40 +65,17 @@ def simplified_validation(partsid, peer):
 
 if __name__ == '__main__':
 
-    simplified_validation('P00001','postgresA')
-
-    """
     time_data = []
-    cpu_list = []
-    partsid = ['P09841','P03280','P01093','P00364','P00121', 'P00040','P00013', 'P00004', 'P00001']
-    #partsid = 'P03280'
-    #filename = 'results_naive'
-   
-    for pid in partsid:
-        #time_data.append([pid, pid])
-        start = time.time()
-        naive_validation(pid,'postgresA') 
-        t = time.time() - start
-        time_data.append([t])
-    
-    for times in time_data:
-        print(times)
+    partsid = 'P0'
+    sumval = 0.0
 
-    
-    partsid = 'P00001'
-    filename = partsid
-
-    for n in range(100):
+    for n in range(10):
         start = time.time()
         naive_validation(partsid,'postgresA')
+        #simplified_validation(partsid,'postgresA')
 
         t = time.time() - start
-        time_data.append([t])
+        sumval+= t
+        #time_data.append([t])
     
-
-    with open(filename, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(time_data)
-    
-    print(f'Data has been written to {filename}')
-    """
+    print(sumval/10.0)

@@ -1,6 +1,7 @@
 from iroha import Iroha, IrohaCrypto, IrohaGrpc
 import SQLexecutor as SQLexe
 from psycopg2 import sql
+import time
 
 iroha = Iroha('admin@test')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
@@ -115,9 +116,17 @@ def IROHA_COMMANDexecutor(partsid, cmd, peer): #peer:executing peer
 
     IrohaCrypto.sign_transaction(tx, priv_key)
     net.send_tx(tx)
+    
+    end_time = [time.time()]
+    start_time = []
 
     for status in net.tx_status_stream(tx):
+        #start_time.append(time.time())
         print(status)
+        #end_time.append(time.time())
+    
+    #for i in range(4):
+    #    print(start_time[i+1]-end_time[i])
     
     if status[0] == 'COMMITTED':
         totalcfp =  get_wsv_totalcfp(partsid, peer)
