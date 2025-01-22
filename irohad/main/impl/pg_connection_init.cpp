@@ -268,8 +268,8 @@ CREATE INDEX index_cfp ON totalcfpval (partid);
 
 INSERT INTO totalcfpval (partid, hash, totalcfp) VALUES 
     ('P00001', 'NULL', 0.0),
-    ('P00002', md5(0.5::text), 0.5),
-    ('P00003', md5(0.3::text), 0.3);
+    ('P00002', 'd310cb367d993fb6fb584b198a2fd72c', 0.5),
+    ('P00003', 'e85b79abfd76b7c13b1334d8d8c194a5', 0.3);
 
 CREATE EXTENSION dblink;
 
