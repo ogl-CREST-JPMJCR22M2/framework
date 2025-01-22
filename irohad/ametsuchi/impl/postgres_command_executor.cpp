@@ -1164,54 +1164,54 @@ namespace iroha {
           sql_,
           R"(
           WITH %s
-            get_childparts AS
+            get_childpart AS
             (
-                WITH RECURSIVE calcu(child_partsid, parents_partsid, duplicates) AS
+                WITH RECURSIVE calcu(child_partid, parents_partid, duplicates) AS
                 (
-                    SELECT PartsInfo.partsid, PartsInfo.parents_partsid, duplicates
-                    FROM PartsInfo
-                    WHERE PartsInfo.parents_partsid = :partsid
+                    SELECT partrelationship.partid, partrelationship.parents_partid, duplicates
+                    FROM partrelationship
+                    WHERE partrelationship.parents_partid = :partid
                     UNION ALL
-                    SELECT PartsInfo.partsid, calcu.parents_partsid, PartsInfo.duplicates
-                    FROM PartsInfo, calcu
-                    WHERE PartsInfo.parents_partsid = calcu.child_partsid 
+                    SELECT partrelationship.partid, calcu.parents_partid, partrelationship.duplicates
+                    FROM partrelationship, calcu
+                    WHERE partrelationship.parents_partid = calcu.child_partid 
                 )
-                SELECT child_partsid, duplicates
+                SELECT child_partid, duplicates
                 FROM calcu
             ),
             import_table AS (
                 SELECT * FROM dblink(
                     'host=postgresA port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partsid, cfp FROM offchaindb_cfpval') 
-                    AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
+                    'SELECT partid, cfp FROM cfpval') 
+                    AS t1(partid CHARACTER varying(288), cfp DECIMAL)
                 UNION ALL
                 SELECT * FROM dblink(
                     'host=postgresB port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partsid, cfp FROM offchaindb_cfpval') 
-                    AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
+                    'SELECT partid, cfp FROM cfpval') 
+                    AS t1(partid CHARACTER varying(288), cfp DECIMAL)
                 UNION ALL
                 SELECT * FROM dblink(
                     'host=postgresC port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partsid, cfp FROM offchaindb_cfpval') 
-                    AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
+                    'SELECT partid, cfp FROM cfpval') 
+                    AS t1(partid CHARACTER varying(288), cfp DECIMAL)
             ),
             get_totalcfp AS
             (   
                 SELECT sum(cfp * duplicates) as child_totalcfp
-                FROM import_table INNER JOIN get_childparts ON get_childparts.child_partsid = import_table.partsid
+                FROM import_table INNER JOIN get_childpart ON get_childpart.child_partid = import_table.partid
             ), 
             new_quantity AS
              (
                  SELECT cfp, child_totalcfp + cfp as new_Totalcfp
                  FROM get_totalcfp, import_table
-                 WHERE import_table.partsid = :partsid
+                 WHERE import_table.partid = :partid
              ),
             checks AS -- error code and check result
             (
                 -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM cfpval
-                WHERE PartsID = :partsid
+                FROM totalcfpval
+                WHERE partid = :partid
 
                 -- check value of cfp
                 UNION
@@ -1233,13 +1233,32 @@ namespace iroha {
                 SELECT 7, new_Totalcfp < (2::decimal ^ 256) / (10::decimal ^ 10)
                 FROM new_quantity
             ),
+            create_hash AS
+            (
+                WITH parent_hash AS
+                (
+                    SELECT md5(new_Totalcfp::TEXT) AS P FROM new_quantity
+                ),
+                child_hash AS (
+                    SELECT totalcfpval.partid, totalcfpval.hash AS C
+                    FROM Partrelationship
+                    JOIN totalcfpval ON Partrelationship.partid = totalcfpval.partid
+                    WHERE Partrelationship.parents_partid = :partid
+                    ORDER BY totalcfpval.partid
+                )
+                SELECT (SELECT P FROM parent_hash) || STRING_AGG(C, '' ORDER BY partid) AS join_hash
+                FROM child_hash
+            ),
 	          inserted AS
             (
-                UPDATE cfpval SET totalcfp = 
+                UPDATE totalcfpval SET (hash, totalcfp) = 
+                ((
+                  SELECT md5(join_hash) FROM create_hash 
+                ),
                 (
                   SELECT new_Totalcfp FROM new_quantity 
-                )
-                WHERE PartsID=:partsid
+                ))
+                WHERE partid=:partid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
                 RETURNING (1)
             )
@@ -1364,63 +1383,25 @@ namespace iroha {
             import_table AS 
             (
                 SELECT * FROM dblink(
-                    'host=' || (SELECT DataLink FROM PartsInfo WHERE PartsID = :partsid) || ' port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partsid, cfp FROM offchaindb_cfpval') 
-                    AS t1(partsid CHARACTER varying(288), cfp DECIMAL)
-             ),
-            general_table AS
-            (   
-                SELECT * FROM cfpval
-                NATURAL RIGHT JOIN PartsInfo
-            ),
-            get_totalcfp AS
-            (
-                SELECT parents_partsid, SUM(totalcfp) AS child_totalcfp
-                 FROM general_table
-                 GROUP BY parents_partsid
-            ),
-            new_quantity AS
-             (
-                 SELECT cfp, child_totalcfp + cfp as new_Totalcfp
-                  FROM get_totalcfp, import_table
-                  WHERE get_totalcfp.parents_partsid=:partsid AND import_table.partsid = :partsid
+                    'host=' || (SELECT assembler FROM partinfo WHERE partid = :partid) || ' port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
+                    'SELECT partid, cfp FROM cfpval') 
+                    AS t1(partid CHARACTER varying(288), cfp DECIMAL)
              ),
             checks AS -- error code and check result
             (
-                -- source account exists
                 SELECT 3 code, count(1) = 1 result
-                FROM cfpval
-                WHERE PartsID = :partsid
+                FROM totalcfpval
+                WHERE partid = :partid
 
                 -- check value of cfp
                 UNION
                 SELECT 4, cfp >= 0
-                FROM new_quantity
-
-		            -- check value of cfp
-                UNION
-                SELECT 5, cfp < 1000
-                FROM new_quantity
-                
-                -- check value of sum_child_cfp
-                UNION
-                SELECT 6, child_totalcfp >= 0
-                FROM get_totalcfp
-
-                -- dest new_Totalcfp overflow
-                UNION
-                SELECT 7, new_Totalcfp < (2::decimal ^ 256) / (10::decimal ^ 10)
-                FROM new_quantity
+                FROM import_table
             ),
             inserted AS
             (
-                UPDATE cfpval SET totalcfp = 
-                (
-                  SELECT new_Totalcfp FROM new_quantity 
-                )
-                WHERE PartsID=:partsid
-                AND (SELECT bool_and(checks.result) FROM checks) %s
-                RETURNING (1)
+                SELECT * FROM import_table 
+                WHERE (SELECT bool_and(checks.result) FROM checks) %s
             )
           SELECT CASE
               %s
@@ -2002,7 +1983,7 @@ namespace iroha {
         shared_model::interface::types::CommandIndexType cmd_index,
         bool do_validation) {
       auto &account_id = command.accountId();
-      auto &parts_id = command.partsId();
+      auto &part_id = command.partsId();
 
       StatementExecutor executor(set_account_detail_statements_,
                                  do_validation,
@@ -2016,7 +1997,7 @@ namespace iroha {
         executor.use("creator", genesis_creator_account_id);
       }
       executor.use("target", account_id);
-      executor.use("partsid", parts_id);
+      executor.use("partid", part_id);
 
       return executor.execute();
     }
@@ -2046,7 +2027,7 @@ namespace iroha {
         shared_model::interface::types::CommandIndexType cmd_index,
         bool do_validation) {
       auto &account_id = command.accountId();
-      auto &parts_id = command.partsId();
+      auto &part_id = command.partsId();
       //auto datalink = 'postgresA';
 
       StatementExecutor executor(subtract_asset_quantity_statements_,
@@ -2061,7 +2042,7 @@ namespace iroha {
         executor.use("creator", genesis_creator_account_id);
       }
       executor.use("target", account_id);
-      executor.use("partsid", parts_id);
+      executor.use("partid", part_id);
       //executor.use("datalink", datalink);
 
       return executor.execute();

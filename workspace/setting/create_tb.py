@@ -4,7 +4,7 @@ from psycopg2._psycopg import connection, cursor
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import sys
 
-args = sys.argv
+args = "C"
 
 for arg in args:
 
@@ -28,12 +28,24 @@ for arg in args:
             cur: cursor
 
             cur.execute(
-                """CREATE TABLE IF NOT EXISTS offchainDB_CFPval(
-                        PartsID CHARACTER varying(288),
+                """
+                
+                drop table offchaindb_cfpval;
+                
+                CREATE TABLE IF NOT EXISTS partinfo(
+                        PartID CHARACTER varying(288)
+                );
+
+                insert into partinfo values ('P00003');
+
+                CREATE TABLE IF NOT EXISTS CFPval(
+                        PartID CHARACTER varying(288),
                         TotalCFP DECIMAL NOT NULL ,
-                        CFP DECIMAL NOT NULL ,
-                        PRIMARY KEY (PartsID)
-                );"""
+                        CFP DECIMAL NOT NULL
+                );
+
+                insert into CFPval values ('P00003', 0.3, 0.3);
+                """
             )
             
     finally:

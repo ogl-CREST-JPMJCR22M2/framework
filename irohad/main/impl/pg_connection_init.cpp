@@ -257,35 +257,47 @@ CREATE TABLE top_block_info (
     hash character varying(128)
 );
 
-CREATE TABLE CFPval (
-    partsid CHARACTER varying(288) NOT NULL,
-    TotalCFP DECIMAL NOT NULL ,
-    PRIMARY KEY (partsid)
+CREATE TABLE totalcfpval (
+    partid CHARACTER varying(288) NOT NULL,
+    Hash CHARACTER varying(288),
+    TotalCFP DECIMAL,
+    PRIMARY KEY (partid)
 );
 
-CREATE INDEX index_cfp ON CFPval (partsid);
+CREATE INDEX index_cfp ON totalcfpval (partid);
 
-INSERT INTO cfpval (partsid, totalcfp) VALUES 
-    ('P00001', '0.0'),
-    ('P00002', '1.0'),
-    ('P00003', '2.0');
+INSERT INTO totalcfpval (partid, hash, totalcfp) VALUES 
+    ('P00001', 'NULL', 0.0),
+    ('P00002', md5(0.5::text), 0.5),
+    ('P00003', md5(0.3::text), 0.3);
 
-CREATE extension dblink;
+CREATE EXTENSION dblink;
 
-CREATE TABLE Partsinfo (
-    PartsID CHARACTER varying(288) NOT NULL,
-    DataLink CHARACTER varying(288) NOT NULL,
-    Parents_PartsID CHARACTER varying(288),
-    duplicates DECIMAL NOT NULL,
-    PRIMARY KEY (PartsID)
+CREATE TABLE partinfo (
+    partid CHARACTER varying(288) NOT NULL,
+    Assembler CHARACTER varying(288) NOT NULL,
+    PRIMARY KEY (partid)
 );
 
-CREATE INDEX index_info ON partsinfo (partsid);
+CREATE INDEX index_info ON partinfo (partid);
 
-INSERT INTO partsinfo (partsid, datalink, parents_partsid, duplicates) VALUES 
-    ('P00001', 'postgresA', 'NULL', 1),
-    ('P00002', 'postgresB', 'P00001', 1),
-    ('P00003', 'postgresC', 'P00001', 3);
+INSERT INTO partinfo (partid, Assembler) VALUES 
+    ('P00001', 'postgresA'),
+    ('P00002', 'postgresB'),
+    ('P00003', 'postgresC');
+
+CREATE TABLE partrelationship (
+    partid CHARACTER varying(288) references partinfo(partid),
+    Parents_partid CHARACTER varying(288),
+    duplicates DECIMAL NOT NULL
+);
+
+CREATE INDEX index_relation ON partinfo (partid);
+
+INSERT INTO partrelationship (partid,parents_partid, duplicates) VALUES 
+    ('P00001', 'NAN', 1),
+    ('P00002', 'P00001', 1),
+    ('P00003', 'P00001', 3);
 
 CREATE TABLE role (
     role_id character varying(32),
