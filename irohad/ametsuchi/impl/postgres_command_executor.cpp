@@ -1211,7 +1211,7 @@ namespace iroha {
                 SELECT md5(sum(new_Totalcfp)::TEXT) || STRING_AGG(totalcfpval.hash, '' ORDER BY totalcfpval.partid) AS join_hash
                 FROM new_quantity, totalcfpval, get_childpart
                 WHERE totalcfpval.partid = get_childpart.child_partid
-            )
+            ),
             checks AS -- error code and check result
             (
                 -- source account exists
