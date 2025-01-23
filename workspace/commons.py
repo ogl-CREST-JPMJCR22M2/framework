@@ -7,15 +7,15 @@ iroha = Iroha('admin@test')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
 ###########################
-## Get DataLink from wsv ##
+## Get assembler from wsv ##
 ###########################
 
-def get_DataLink(partsid, peer):  #peer:executing peer
+def get_assembler(partid, peer):  #peer:executing peer
 
     SQL = sql.SQL("""
-            SELECT DataLink FROM Partsinfo WHERE partsid = {PartsID};
+            SELECT assembler FROM partinfo WHERE partid = {partid};
         """).format(
-            PartsID = sql.Literal(partsid)
+            partid = sql.Literal(partid)
         )
     return SQLexe.QUERYexecutor_wsv(SQL, peer)[0][0]
 
@@ -24,12 +24,12 @@ def get_DataLink(partsid, peer):  #peer:executing peer
 ## Get cfp from offchainDB ##
 #############################
 
-def get_offchaindb_cfp(partsid, peer):  #peer:target peer
+def get_offchaindb_cfp(partid, peer):  #peer:target peer
 
     SQL = sql.SQL("""
-            SELECT CFP FROM offchainDB_CFPval WHERE partsid = {PartsID};
+            SELECT CFP FROM cfpval WHERE partid = {partid};
         """).format(
-            PartsID = sql.Literal(partsid)
+            partid = sql.Literal(partid)
         )
     return SQLexe.QUERYexecutor_off(SQL, peer)[0][0]
 
@@ -38,12 +38,12 @@ def get_offchaindb_cfp(partsid, peer):  #peer:target peer
 ## Get totalcfp from offchainDB ##
 ##################################
 
-def get_offchaindb_totalcfp(partsid, peer):  #peer:target peer
+def get_offchaindb_totalcfp(partid, peer):  #peer:target peer
 
     SQL = sql.SQL("""
-            SELECT totalCFP FROM offchainDB_CFPval WHERE partsid = {PartsID};
+            SELECT totalCFP FROM cfpval WHERE partid = {partid};
         """).format(
-            PartsID = sql.Literal(partsid)
+            partid = sql.Literal(partid)
         )
     return str(SQLexe.QUERYexecutor_off(SQL, peer)[0][0])
 
@@ -52,12 +52,12 @@ def get_offchaindb_totalcfp(partsid, peer):  #peer:target peer
 ## Get Totalcfp from wsv ##
 ###########################
 
-def get_wsv_totalcfp(partsid, peer): #peer:target peer
+def get_wsv_totalcfp(partid, peer): #peer:target peer
 
     SQL = sql.SQL("""
-            SELECT totalcfp FROM cfpval WHERE partsid = {PartsID};
+            SELECT totalcfp FROM totalcfpval WHERE partid = {partid};
         """).format(
-            PartsID = sql.Literal(partsid)
+            partid = sql.Literal(partid)
         )
     return str(SQLexe.QUERYexecutor_wsv(SQL, peer)[0][0])
 
@@ -66,12 +66,12 @@ def get_wsv_totalcfp(partsid, peer): #peer:target peer
 ## UPDATE offchainDB ##
 #######################
 
-def update_data(partsid, totalcfp, peer):  #peer:target peer
+def update_data(partid, totalcfp, peer):  #peer:target peer
     SQL = sql.SQL("""
-            UPDATE offchaindb_cfpval set totalcfp = {totalcfp} 
-            WHERE partsid = {PartsID} ;
+            UPDATE cfpval set totalcfp = {totalcfp} 
+            WHERE partid = {partid} ;
         """).format(
-            PartsID = sql.Literal(partsid),
+            partid = sql.Literal(partid),
             totalcfp = sql.Literal(totalcfp)
         )
 
@@ -81,12 +81,12 @@ def update_data(partsid, totalcfp, peer):  #peer:target peer
 ## UPDATE wsv ##
 ################
 
-def update_wsv(partsid, totalcfp, peer):  #peer:target peer
+def update_wsv(partid, totalcfp, peer):  #peer:target peer
     SQL = sql.SQL("""
-            UPDATE cfpval set totalcfp = {totalcfp} 
-            WHERE partsid = {PartsID} ;
+            UPDATE totalcfpval set totalcfp = {totalcfp} 
+            WHERE partid = {partid} ;
         """).format(
-            PartsID = sql.Literal(partsid),
+            partid = sql.Literal(partid),
             totalcfp = sql.Literal(totalcfp)
         )
 
@@ -97,7 +97,7 @@ def update_wsv(partsid, totalcfp, peer):  #peer:target peer
 ## Run iroha command ##
 #######################
 
-def IROHA_COMMANDexecutor(partsid, cmd, peer): #peer:executing peer
+def IROHA_COMMANDexecutor(partid, cmd, peer): #peer:executing peer
     
     if peer[8:] == 'A':
         net = IrohaGrpc('192.168.32.2:50051')
@@ -110,7 +110,7 @@ def IROHA_COMMANDexecutor(partsid, cmd, peer): #peer:executing peer
         [iroha.command(
             cmd,
             account_id = 'admin@test',
-            parts_id = partsid
+            parts_id = partid
         )]
     )
 
@@ -129,9 +129,9 @@ def IROHA_COMMANDexecutor(partsid, cmd, peer): #peer:executing peer
     #    print(start_time[i+1]-end_time[i])
     
     if status[0] == 'COMMITTED':
-        totalcfp =  get_wsv_totalcfp(partsid, peer)
-        datalink = get_DataLink(partsid, peer)
-        update_data(partsid, totalcfp, datalink)
+        totalcfp =  get_wsv_totalcfp(partid, peer)
+        assembler = get_assembler(partid, peer)
+        update_data(partid, totalcfp, assembler)
         return
     else:
         return
@@ -139,8 +139,8 @@ def IROHA_COMMANDexecutor(partsid, cmd, peer): #peer:executing peer
 
 if __name__ == '__main__':
 
-    partsid = 'P00100'
-    IROHA_COMMANDexecutor(partsid, 'SetAccountDetail','postgresA')
-    #IROHA_COMMANDexecutor(partsid,'SetAccountDetail', 'postgresA')
-    #IROHA_COMMANDexecutor(partsid,'SubtractAssetQuantity', 'postgresA')
+    partid = 'P00100'
+    IROHA_COMMANDexecutor(partid, 'SetAccountDetail','postgresA')
+    #IROHA_COMMANDexecutor(partid,'SetAccountDetail', 'postgresA')
+    #IROHA_COMMANDexecutor(partid,'SubtractAssetQuantity', 'postgresA')
     
