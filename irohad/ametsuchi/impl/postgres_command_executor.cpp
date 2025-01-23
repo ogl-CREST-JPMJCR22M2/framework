@@ -1168,9 +1168,9 @@ namespace iroha {
             (
                 WITH RECURSIVE calcu(child_partid, parents_partid, duplicates) AS
                 (
-                    SELECT partrelationship.partid, partrelationship.parents_partid, duplicates
+                    SELECT partid, parents_partid, duplicates
                     FROM partrelationship
-                    WHERE partrelationship.parents_partid = :partid
+                    WHERE parents_partid = :partid
                     UNION ALL
                     SELECT partrelationship.partid, calcu.parents_partid, partrelationship.duplicates
                     FROM partrelationship, calcu
@@ -1201,37 +1201,17 @@ namespace iroha {
                 FROM import_table INNER JOIN get_childpart ON get_childpart.child_partid = import_table.partid
             ), 
             new_quantity AS
-             (
-                 SELECT cfp, child_totalcfp + cfp as new_Totalcfp
-                 FROM get_totalcfp, import_table
-                 WHERE import_table.partid = :partid
-             ),
+            (
+                    SELECT cfp, child_totalcfp + cfp as new_Totalcfp
+                    FROM get_totalcfp, import_table
+                    WHERE import_table.partid = :partid
+            ),
             create_hash AS
             (
-                WITH parent_hash AS
-                (
-                    SELECT md5(new_Totalcfp::TEXT) AS P FROM new_quantity
-                ),
-                child_hash AS (
-                    SELECT totalcfpval.partid, totalcfpval.hash AS C
-                    FROM Partrelationship
-                    JOIN totalcfpval ON Partrelationship.partid = totalcfpval.partid
-                    WHERE Partrelationship.parents_partid = :partid
-                    ORDER BY totalcfpval.partid
-                )
-                SELECT (SELECT P FROM parent_hash) || STRING_AGG(C, '' ORDER BY partid) AS join_hash
-                FROM child_hash
-            ),
-            inserted_hash AS
-            (
-                UPDATE totalcfpval SET hash = 
-                (
-                  SELECT md5(join_hash) FROM create_hash 
-                )
-                WHERE partid=:partid
-                AND (SELECT bool_and(checks.result) FROM checks) %s
-                RETURNING (1)
-            ),
+                SELECT md5(sum(new_Totalcfp)::TEXT) || STRING_AGG(totalcfpval.hash, '' ORDER BY totalcfpval.partid) AS join_hash
+                FROM new_quantity, totalcfpval, get_childpart
+                WHERE totalcfpval.partid = get_childpart.child_partid
+            )
             checks AS -- error code and check result
             (
                 -- source account exists
@@ -1261,10 +1241,8 @@ namespace iroha {
             ),
 	          inserted AS
             (
-                UPDATE totalcfpval SET totalcfp = 
-                (
-                  SELECT new_Totalcfp FROM new_quantity 
-                )
+                UPDATE totalcfpval SET (hash, totalcfp) = (md5(join_hash), new_Totalcfp)
+                FROM create_hash, new_quantity 
                 WHERE partid=:partid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
                 RETURNING (1)
