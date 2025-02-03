@@ -21,5 +21,10 @@ namespace shared_model {
       return subtract_asset_quantity_.parts_id();
     }
 
+    const interface::types::HashvalType &SubtractAssetQuantity::hashVal()
+        const {
+      return subtract_asset_quantity_.hash_val();
+    }
+
   }  // namespace proto
 }  // namespace shared_model

@@ -7,8 +7,6 @@
 #define IROHA_SHARED_MODEL_SUBTRACT_ASSET_QUANTITY_HPP
 
 #include "interfaces/base/model_primitive.hpp"
-
-#include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -27,6 +25,8 @@ namespace shared_model {
        * @return quantity of asset for subtracting
        */
       virtual const types::PartsIdType &partsId() const = 0;
+
+      virtual const types::HashvalType &hashVal() const = 0;
 
       std::string toString() const override;
 

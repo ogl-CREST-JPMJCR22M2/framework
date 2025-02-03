@@ -13,12 +13,14 @@ namespace shared_model {
           .init("SubtractAssetQuantity")
           .appendNamed("account_id", accountId())
           .appendNamed("parts_id", partsId())
+          .appendNamed("hash_val", hashVal())
           .finalize();
     }
 
     bool SubtractAssetQuantity::operator==(const ModelType &rhs) const {
       return  accountId() == rhs.accountId() 
-          and partsId() == rhs.partsId();
+          and partsId() == rhs.partsId()
+          and hashVal() == rhs.hashVal();
     }
 
   }  // namespace interface

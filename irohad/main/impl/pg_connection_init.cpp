@@ -266,12 +266,8 @@ CREATE TABLE totalcfpval (
 
 CREATE INDEX index_cfp ON totalcfpval (partid);
 
-INSERT INTO totalcfpval (partid, hash, totalcfp) VALUES 
-    ('P00001', 'NULL', 0.0),
-    ('P00002', 'd310cb367d993fb6fb584b198a2fd72c', 0.5),
-    ('P00003', 'e85b79abfd76b7c13b1334d8d8c194a5', 0.3);
-
 CREATE EXTENSION dblink;
+CREATE EXTENSION PGCRYPTO;
 
 CREATE TABLE partinfo (
     partid CHARACTER varying(288) NOT NULL,
@@ -281,11 +277,6 @@ CREATE TABLE partinfo (
 
 CREATE INDEX index_info ON partinfo (partid);
 
-INSERT INTO partinfo (partid, Assembler) VALUES 
-    ('P00001', 'postgresA'),
-    ('P00002', 'postgresB'),
-    ('P00003', 'postgresC');
-
 CREATE TABLE partrelationship (
     partid CHARACTER varying(288) references partinfo(partid),
     Parents_partid CHARACTER varying(288),
@@ -293,11 +284,6 @@ CREATE TABLE partrelationship (
 );
 
 CREATE INDEX index_relation ON partinfo (partid);
-
-INSERT INTO partrelationship (partid,parents_partid, duplicates) VALUES 
-    ('P00001', 'NAN', 1),
-    ('P00002', 'P00001', 1),
-    ('P00003', 'P00001', 3);
 
 CREATE TABLE role (
     role_id character varying(32),

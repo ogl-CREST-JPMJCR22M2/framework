@@ -1208,7 +1208,7 @@ namespace iroha {
             ),
             create_hash AS
             (
-                SELECT md5(sum(new_Totalcfp)::TEXT) || STRING_AGG(totalcfpval.hash, '' ORDER BY totalcfpval.partid) AS join_hash
+                SELECT encode(digest(sum(new_Totalcfp)::TEXT, 'sha256'), 'hex') || STRING_AGG(totalcfpval.hash, '' ORDER BY totalcfpval.partid) AS join_hash
                 FROM new_quantity, totalcfpval, get_childpart
                 WHERE totalcfpval.partid = get_childpart.child_partid
             ),
@@ -1241,7 +1241,7 @@ namespace iroha {
             ),
 	          inserted AS
             (
-                UPDATE totalcfpval SET (hash, totalcfp) = (md5(join_hash), new_Totalcfp)
+                UPDATE totalcfpval SET (hash, totalcfp) = (encode(digest(join_hash, 'sha256'), 'hex'), new_Totalcfp)
                 FROM create_hash, new_quantity 
                 WHERE partid=:partid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
@@ -1365,28 +1365,18 @@ namespace iroha {
           sql_,
           R"(
           WITH %s
-            import_table AS 
-            (
-                SELECT * FROM dblink(
-                    'host=' || (SELECT assembler FROM partinfo WHERE partid = :partid) || ' port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 
-                    'SELECT partid, cfp FROM cfpval') 
-                    AS t1(partid CHARACTER varying(288), cfp DECIMAL)
-             ),
             checks AS -- error code and check result
             (
                 SELECT 3 code, count(1) = 1 result
                 FROM totalcfpval
                 WHERE partid = :partid
-
-                -- check value of cfp
-                UNION
-                SELECT 4, cfp >= 0
-                FROM import_table
             ),
             inserted AS
             (
-                SELECT * FROM import_table 
-                WHERE (SELECT bool_and(checks.result) FROM checks) %s
+                UPDATE totalcfpval SET hash = :hashval
+                WHERE partid=:partid
+                AND (SELECT bool_and(checks.result) FROM checks) %s
+                RETURNING (1)
             )
           SELECT CASE
               %s
@@ -2013,6 +2003,7 @@ namespace iroha {
         bool do_validation) {
       auto &account_id = command.accountId();
       auto &part_id = command.partsId();
+      auto &hash_val = command.hashVal();
       //auto datalink = 'postgresA';
 
       StatementExecutor executor(subtract_asset_quantity_statements_,
@@ -2028,6 +2019,7 @@ namespace iroha {
       }
       executor.use("target", account_id);
       executor.use("partid", part_id);
+      executor.use("hashval", hash_val);
       //executor.use("datalink", datalink);
 
       return executor.execute();

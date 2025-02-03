@@ -314,12 +314,15 @@ namespace shared_model {
         });
       }
 
-      auto subtractAssetQuantity(const interface::types::AccountIdType &account_id,
-                                 const interface::types::PartsIdType &parts_id const {
+      auto subtractAssetQuantity(
+        const interface::types::AccountIdType &account_id,
+        const interface::types::PartsIdType &parts_id,
+        const interface::types::HashvalType &hash_val) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_subtract_asset_quantity();
           command->set_account_id(account_id);
           command->set_parts_id(parts_id);
+          command->set_hash_val(hash_val);
         });
       }
 

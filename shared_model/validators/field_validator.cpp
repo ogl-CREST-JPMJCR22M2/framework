@@ -236,9 +236,16 @@ namespace shared_model {
       return kAccountDetailKeyValidator.validate(key);
     }
 
+// いらん気がする
     std::optional<ValidationError> FieldValidator::validatePartsIdType(
         const interface::types::PartsIdType &parts_id) const {
       return kAccountDetailKeyValidator.validate(parts_id);
+    }
+
+// いらん気がする
+    std::optional<ValidationError> FieldValidator::validateHashvalType(
+        const interface::types::HashvalType &hash_val) const {
+      return kAccountDetailKeyValidator.validate(hash_val);
     }
 
     std::optional<ValidationError> FieldValidator::validateAccountDetailValue(

@@ -229,11 +229,13 @@ std::shared_ptr<Command> CommandGenerator::generateSetAccountQuorum(
 
 std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
         const std::string& account_id,
-        const std::string& parts_id)
+        const std::string& parts_id,
+        const std::string& hash_val)
 {
     SubtractAssetQuantity subtractAssetQuantity;
     subtractAssetQuantity.set_account_id(account_id);
     subtractAssetQuantity.set_parts_id(parts_id);
+    subtractAssetQuantity.set_hash_val(hash_val);
 
     auto cmd = Command();
     cmd.set_allocated_subtract_asset_quantity(new SubtractAssetQuantity(subtractAssetQuantity));

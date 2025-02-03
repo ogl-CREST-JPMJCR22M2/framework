@@ -21,6 +21,8 @@ namespace shared_model {
 
       const interface::types::PartsIdType &partsId() const override;
 
+      const interface::types::HashvalType &hashVal() const override;
+
 
      private:
       const iroha::protocol::SubtractAssetQuantity &subtract_asset_quantity_;

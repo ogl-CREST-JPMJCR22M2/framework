@@ -191,11 +191,13 @@ Tx& Tx::setAccountQuorum(
 
 Tx& Tx::subtractAssetQuantity(
         const std::string& account_id,
-        const std::string& part_id)
+        const std::string& part_id,
+        const std::string& hash_val)
 {
     auto cmd = cmd_generator_.generateSubtractAssetQuantity(
                 account_id,
-                parts_id);
+                parts_id,
+                hash_val);
     addCommand(*cmd);
     return *this;
 }

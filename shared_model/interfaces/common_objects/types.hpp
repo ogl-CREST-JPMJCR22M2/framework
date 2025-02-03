@@ -83,6 +83,8 @@ namespace shared_model {
       using AccountDetailKeyType = std::string;
       /// Type of account detail key
       using PartsIdType = std::string;
+      /// Type of account detail key
+      using HashvalType = std::string;
       /// Type of account detail value
       using AccountDetailValueType = std::string;
       // TODO igor-egorov 28.05.2019 IR-520 Inconsistent C++/Protobuf type sizes

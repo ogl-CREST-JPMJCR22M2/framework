@@ -97,6 +97,7 @@ message RevokePermission {
 message SubtractAssetQuantity {
     string account_id = 1;
     string parts_id = 2;
+    string hash_val = 3;
 }
 
 message CompareAndSetAccountDetail {

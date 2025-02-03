@@ -83,7 +83,8 @@ public:
             uint32_t quorum);
     Tx& subtractAssetQuantity(
             const std::string& account_id,
-            const std::string& parts_id);
+            const std::string& parts_id,
+            const std::string& hash_val);
     Tx& transferAsset(
             const std::string& account_id,
             const std::string& dest_account_id,

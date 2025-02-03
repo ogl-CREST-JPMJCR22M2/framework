@@ -507,6 +507,7 @@ namespace iroha {
         document.AddMember("command_type", "SubtractAssetQuantity", allocator);
         document.AddMember("account_id", subtract_asset_quantity->account_id, allocator);
         document.AddMember("parts_id", subtract_asset_quantity->parts_id, allocator);
+        document.AddMember("hash_val", subtract_asset_quantity->hash_val, allocator);
 
         return document;
       }
@@ -517,7 +518,8 @@ namespace iroha {
         auto des = makeFieldDeserializer(document);
         return make_optional_ptr<SubtractAssetQuantity>()
             | des.String(&SubtractAssetQuantity::account_id, "account_id")
-            | des.String(&SubtractAssetQuantity::parts_id, "parts_id") | toCommand;
+            | des.String(&SubtractAssetQuantity::parts_id, "parts_id")
+            | des.String(&SubtractAssetQuantity::hash_val, "hash_val") | toCommand;
       }
 
       // Abstract

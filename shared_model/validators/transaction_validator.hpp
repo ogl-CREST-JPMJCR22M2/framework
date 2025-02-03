@@ -216,7 +216,8 @@ namespace shared_model {
             "SubtractAssetQuantity",
             {},
             {validator_.validateAccountId(subtract_asset_quantity.accountId()),
-             validator_.validatePartsIdType(subtract_asset_quantity.partsId())});
+             validator_.validatePartsIdType(subtract_asset_quantity.partsId()),
+             validator_.validateHashvalType(subtract_asset_quantity.hashVal())});
       }
 
       std::optional<ValidationError> operator()(
