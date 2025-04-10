@@ -1,15 +1,20 @@
-import SQLexecutor as SQLexe
-from psycopg2 import sql
+### partidを使って求める
+
 from sqlalchemy import create_engine
-import commons as com
 import polars as pl
 import time
 import random
 import hashlib
 
+
+# ======== DataFrameの表示の仕方 ======== #
 pl.Config.set_tbl_cols(-1)
 pl.Config.set_tbl_rows(-1)
-pl.Config.set_fmt_str_lengths(n=264)
+pl.Config.set_fmt_str_lengths(n=30)
+# ===================================== #
+
+
+# ======== postgresqlに接続して取得する部分 ======== #
 
 # offchainに接続，cfpをget
 def get_cfpval(peer):
@@ -22,25 +27,25 @@ def get_cfpval(peer):
     
     return df
 
-
 # offchainから全てのcfpをget，結合
 def join_cfpvals(peers):
 
-    df1 = get_cfpval(peers[0])
+    df1 = get_cfpval("A")
 
     for p in peers[1:]:
         df2 = get_cfpval(p)
         df1 = pl.concat([df1, df2])
 
-    return df1.with_columns(pl.col("cfp").cast(pl.String).alias("cfp"))
+    return df1
 
 
-# 部品木全体を取得
+# ======== 部品木の取得 ======== #
+
 def get_tree(peer, parents_partid):
 
     engine = create_engine("postgresql://postgres:mysecretpassword@postgres"+peer+":5432/iroha_default")
 
-    sql_statement ="SELECT partid, parents_partid FROM partrelationship;"
+    sql_statement ="SELECT partid, parents_partid, priority FROM partrelationship;"
 
     all_tree = pl.read_database(sql_statement, engine)
 
@@ -56,14 +61,16 @@ def get_tree(peer, parents_partid):
         
         return child_df
 
-    df = pl.concat([all_tree.filter(pl.col("parents_partid").is_in(["null"])), get_childpart(all_tree, parents_partid)])
+    df = pl.concat([all_tree.filter(pl.col("partid") == parents_partid), get_childpart(all_tree, parents_partid)])
     
     return df
 
 
+# ======== 算出部分 ======== #
+
 # ハッシュ化    
-def sha256(value: str) -> str:
-    return hashlib.sha256(value.encode()).hexdigest()
+def sha256(value: float) -> str:
+    return hashlib.sha256(str(value).encode()).hexdigest()
 
 # ハッシュ値を計算する関数
 def compute_parent_hashes(df):
@@ -72,18 +79,23 @@ def compute_parent_hashes(df):
     df = df.with_columns(
         pl.when(~pl.col("partid").is_in(df["parents_partid"]))
         .then(pl.col("cfp").map_elements(sha256, return_dtype=pl.String))
-        #.then(pl.col("cfpval")) #確認用
+        #.then(pl.col("cfp").cast(pl.String)) #確認用
         .otherwise(None)
-        .alias("hash_value")
+        .alias("hash")
     )
 
     # 子ノードリストを作成
     child_hashes = df.select(["partid", "parents_partid"]).group_by("parents_partid").agg(pl.col("partid").alias("child_parts")).rename({"parents_partid": "partid"})
     
     df = df.join(child_hashes, on="partid", how="left")
-    
+
+    # 子部品の連結
     def get_child_hashes(parts: list[str]) -> str:
-        hash_values = df.filter(pl.col("partid").is_in(parts))["hash_value"].to_list()
+
+        df_ =  df.filter(pl.col("partid").is_in(parts))
+        df_ = df_.sort(["priority"])
+
+        hash_values = df_["hash"].to_list()
         clean_hashes = []
 
         for h in hash_values:
@@ -97,70 +109,76 @@ def compute_parent_hashes(df):
         return out
 
     # ハッシュ値を計算
-    while df["hash_value"].null_count() > 0:
+    while df["hash"].null_count() > 0:
 
         df = df.with_columns(
-            pl.when((pl.col("hash_value").is_null()) & (pl.col("child_parts").is_not_null()))
+            pl.when((pl.col("hash").is_null()) & (pl.col("child_parts").is_not_null()))
             .then(
                 pl.concat_str([
                     pl.col("cfp").map_elements(sha256, return_dtype=pl.String),
-                    pl.lit("("),
+                    #pl.col("cfp").cast(pl.String),
+                    #pl.lit("("),
                     pl.col("child_parts").map_elements(get_child_hashes, return_dtype=pl.String),
-                    pl.lit(")"),
-                    ]).map_elements(sha256, return_dtype=pl.String)
+                    #pl.lit(")"),
+                    ])
+                    .map_elements(sha256, return_dtype=pl.String)
             )
-            .otherwise(pl.col("hash_value"))
-            .alias("hash_value")
+            .otherwise(pl.col("hash"))
+            .alias("hash")
         )
     
-    print(df.drop("child_parts"))    
+    print(df["partid", "hash"])
             
     return df
 
 
-if __name__ == '__main__':
 
-    peer = "A"
+def make_merkltree(root_partid):
+
     peers = ["A", "B", "C"]
-    partid = 'P0'
-    start = time.time()
 
-    df = get_tree(peer, partid)
+    df = get_tree(peers[0], root_partid) # root_partidがルートの部品木の抽出
 
-    """df_h = pl.DataFrame(
+    df_h=join_cfpvals(peers) # cfpvalの取得
+    """
+    #確認用
+    df_h = pl.DataFrame(
         {
             "partid" : ["P"+str(i) for i in range(0, 156)],
-            "cfpval" : [str(round(random.random(), 4)) for i in range(0, 156)]
+            "cfp" : [chr(random.randint(0,26) + 97) for i in range(0, 156)]
+            #"cfp" : [i for i in range(0, 156)]
         }
-    )
-    """
+    )"""
 
-    df_h=join_cfpvals(peers)
-    df = df.join(df_h, on=["partid"], how="left")
+    df = df.join(df_h, on=["partid"], how="left") # 部品木にcfpvalを結合
+
+    result = compute_parent_hashes(df) # マークル木を計算
+
+    return result
+
+
+
+# ======== MAIN ======== #
+
+if __name__ == '__main__':
+
+    root_partid = 'P0'
+
+    start = time.time()
+
+    df = make_merkltree(root_partid)
     
-    compute_parent_hashes(df)
-
     t = time.time() - start
+    print("time:", t)
+
+    #totalCFPの算出
+    df_total = df.select(pl.col("cfp").sum()).item()
+    print("sum:", df_total)
     
-    print(t)
-    
 
-### ============================================================================================== ###
 
-def calc_totaocfp(partid, peer, cfp):
+# ======= 開発用 ======= #
 
-    # pandaframeに格納
-    # totalcfp算出
-
-    SQL = sql.SQL("""
-
-            UPDATE cfpval set totalcfp = {totalcfp} 
-            WHERE partid = {partid} ;
-
-        """).format(
-            partid = sql.Literal(partid),
-            cfp = sql.Literal(cfp)
-        )
-
-    SQLexe.COMMANDexecutor_off(SQL, peer)
-
+# decimal -> str    
+def to_string(value: float) -> str:
+    return str(value)

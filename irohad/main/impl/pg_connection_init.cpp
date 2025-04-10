@@ -259,7 +259,7 @@ CREATE TABLE top_block_info (
 
 CREATE TABLE totalcfpval (
     partid CHARACTER varying(288) NOT NULL,
-    Hash CHARACTER varying(288),
+    hash CHARACTER varying(288),
     TotalCFP DECIMAL,
     PRIMARY KEY (partid)
 );
@@ -279,7 +279,8 @@ CREATE INDEX index_info ON partinfo (partid);
 
 CREATE TABLE partrelationship (
     partid CHARACTER varying(288) references partinfo(partid),
-    Parents_partid CHARACTER varying(288),
+    parents_partid CHARACTER varying(288),
+    priority int,
     duplicates DECIMAL NOT NULL
 );
 
