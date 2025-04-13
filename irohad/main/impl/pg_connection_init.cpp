@@ -259,8 +259,13 @@ CREATE TABLE top_block_info (
 
 CREATE TABLE totalcfpval (
     partid CHARACTER varying(288) NOT NULL,
-    hash CHARACTER varying(288),
     TotalCFP DECIMAL,
+    PRIMARY KEY (partid)
+);
+
+CREATE TABLE merkl_tree (
+    partid CHARACTER varying(288) NOT NULL,
+    hash CHARACTER varying(288),
     PRIMARY KEY (partid)
 );
 

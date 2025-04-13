@@ -5,6 +5,7 @@ import polars as pl
 import time
 import random
 import hashlib
+import write_to_db as w
 
 
 # ======== DataFrameの表示の仕方 ======== #
@@ -153,6 +154,8 @@ def make_merkltree(root_partid):
     df = df.join(df_h, on=["partid"], how="left") # 部品木にcfpvalを結合
 
     result = compute_parent_hashes(df) # マークル木を計算
+
+    w.upsert_hash_exe(result, "A")
 
     return result
 

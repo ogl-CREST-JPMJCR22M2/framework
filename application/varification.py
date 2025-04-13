@@ -5,7 +5,7 @@ import calculation as cal
 import polars as pl
 import time
 
-# onchain-dbに接続，
+# onchain-dbに接続，merkle treeのdetaframeを取得
 
 def get_hash_df(peer):
 
@@ -16,6 +16,7 @@ def get_hash_df(peer):
     df = pl.read_database(sql_statement, engine)
     
     return df
+
 
 # 既存のhashval(onchain-dbから取得)とアンチ結合を使うことで比較
 

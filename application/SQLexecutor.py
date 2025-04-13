@@ -25,7 +25,7 @@ def QUERYexecutor_off(SQL, peer):
     return data
 
 
-def QUERYexecutor_wsv(SQL, peer):
+def QUERYexecutor_on(SQL, peer):
     conn: Optional[connection] = None
     try:
         dsn = {
@@ -68,7 +68,7 @@ def COMMANDexecutor_off(SQL, peer):
         if conn:
             conn.close()
 
-def COMMANDexecutor_wsv(SQL, peer):
+def COMMANDexecutor_on(SQL, peer):
     conn: Optional[connection] = None
     try:
         dsn = {
