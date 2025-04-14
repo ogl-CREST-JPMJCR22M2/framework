@@ -39,10 +39,9 @@ def join_cfpvals(peers):
 
     return df1
 
-
 # ======== 部品木の取得 ======== #
 
-def get_tree(peer, parents_partid):
+def get_part_tree(peer, parents_partid):
 
     engine = create_engine("postgresql://postgres:mysecretpassword@postgres"+peer+":5432/iroha_default")
 
@@ -65,6 +64,9 @@ def get_tree(peer, parents_partid):
     df = pl.concat([all_tree.filter(pl.col("partid") == parents_partid), get_childpart(all_tree, parents_partid)])
     
     return df
+
+
+
 
 
 # ======== 算出部分 ======== #
@@ -138,9 +140,10 @@ def make_merkltree(root_partid):
 
     peers = ["A", "B", "C"]
 
-    df = get_tree(peers[0], root_partid) # root_partidがルートの部品木の抽出
+    df = get_part_tree(peers[0], root_partid) # root_partidがルートの部品木の抽出
 
     df_h=join_cfpvals(peers) # cfpvalの取得
+
     """
     #確認用
     df_h = pl.DataFrame(

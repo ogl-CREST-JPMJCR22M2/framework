@@ -263,7 +263,7 @@ CREATE TABLE totalcfpval (
     PRIMARY KEY (partid)
 );
 
-CREATE TABLE merkl_tree (
+CREATE TABLE merkle_tree (
     partid CHARACTER varying(288) NOT NULL,
     hash CHARACTER varying(288),
     PRIMARY KEY (partid)
