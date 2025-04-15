@@ -2,6 +2,10 @@ from typing import Optional
 from psycopg2 import connect, sql
 from psycopg2._psycopg import connection, cursor
 
+iroha = Iroha('admin@test')
+priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
+
+
 def QUERYexecutor_off(SQL, peer):
     conn: Optional[connection] = None
     try:
@@ -87,3 +91,37 @@ def COMMANDexecutor_on(SQL, peer):
     finally:
         if conn:
             conn.close()
+
+
+def IROHA_CMDexe(hash_val, peer, cmd = "SubtractAssetQuantity"): #peer:executing peer
+    
+    if peer[8:] == 'A':
+        net = IrohaGrpc('192.168.32.2:50051')
+    elif peer[8:] == 'B':
+        net = IrohaGrpc('192.168.32.3:50051')
+    else :
+        net = IrohaGrpc('192.168.32.4:50051')
+
+    tx = iroha.transaction(
+        [iroha.command(
+            cmd,
+            account_id = 'admin@test',
+            hash_val = hash_val
+        )]
+    )
+
+    IrohaCrypto.sign_transaction(tx, priv_key)
+    net.send_tx(tx)
+    
+    end_time = [time.time()]
+    start_time = []
+
+    for status in net.tx_status_stream(tx):
+        print(status)
+    
+
+if __name__ == '__main__':
+
+    partid = 'P00100'
+    IROHA_COMMANDexecutor(partid, 'SetAccountDetail','postgresA')
+    

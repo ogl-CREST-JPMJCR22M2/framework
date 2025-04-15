@@ -25,7 +25,6 @@ namespace shared_model {
     class AccountDetailPaginationMeta;
     class AccountDetailRecordId;
     class Amount;
-    class Emissions;
     class Asset;
     class AssetPaginationMeta;
     class BatchMeta;
@@ -73,9 +72,6 @@ namespace shared_model {
 
       std::optional<ValidationError> validateAmount(
           const interface::Amount &amount) const;
-    
-      std::optional<ValidationError> validateEmissions(
-          const interface::Emissions &Emissions) const;
 
       std::optional<ValidationError> validatePubkey(
           std::string_view pubkey) const;
@@ -126,9 +122,9 @@ namespace shared_model {
       std::optional<ValidationError> validatePartsIdType(
           const interface::types::PartsIdType &parts_id) const;
     
-     std::optional<ValidationError> validateHashvalType(
+      std::optional<ValidationError> validateHashvalType(
           const interface::types::HashvalType &hash_val) const;
-
+        
       std::optional<ValidationError> validateAccountDetailValue(
           const interface::types::AccountDetailValueType &value) const;
 

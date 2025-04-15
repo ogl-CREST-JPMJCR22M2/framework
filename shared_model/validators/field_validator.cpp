@@ -17,7 +17,6 @@
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/amount.hpp"
-#include "interfaces/common_objects/emissions.hpp"
 #include "interfaces/common_objects/asset.hpp"
 #include "interfaces/common_objects/domain.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -180,15 +179,6 @@ namespace shared_model {
       if (amount.sign() <= 0) {
         return ValidationError(
             "Amount", {"Invalid number, amount must be greater than 0"});
-      }
-      return std::nullopt;
-    }
-
-    std::optional<ValidationError> FieldValidator::validateEmissions(
-        const interface::Emissions &emissions) const {
-      if (emissions.sign() <= 0) {
-        return ValidationError(
-            "Emissions", {"Invalid number, emissions must be greater than 0"});
       }
       return std::nullopt;
     }

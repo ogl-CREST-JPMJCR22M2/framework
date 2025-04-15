@@ -1365,16 +1365,22 @@ namespace iroha {
           sql_,
           R"(
           WITH %s
+            new_hashs AS (
+              SELECT
+                unnest(:parts_id::text[]) AS partid,
+                unnest(:hash_vals::text[]) AS hash
+             ),
             checks AS -- error code and check result
             (
                 SELECT 3 code, count(1) = 1 result
-                FROM totalcfpval
-                WHERE partid = :partid
+                FROM new_hashs n, merkle_tree m
+                WHERE m.partid = n.partid
             ),
             inserted AS
             (
-                UPDATE totalcfpval SET hash = :hashval
-                WHERE partid=:partid
+                UPDATE merkle_tree as m SET hash = n.hash
+                FROM new_hashs n
+                WHERE m.partid = n.partid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
                 RETURNING (1)
             )
@@ -2017,10 +2023,9 @@ namespace iroha {
         static const std::string genesis_creator_account_id = "genesis";
         executor.use("creator", genesis_creator_account_id);
       }
-      executor.use("target", account_id);
+
       executor.use("partid", part_id);
       executor.use("hashval", hash_val);
-      //executor.use("datalink", datalink);
 
       return executor.execute();
     }

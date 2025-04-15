@@ -158,9 +158,10 @@ def make_merkltree(root_partid):
 
     result = compute_parent_hashes(df) # マークル木を計算
 
-    w.upsert_hash_exe(result, "A")
+    # Irohaコマンドで書き込み
+    SQLexe.IROHA_CMDexe(w.to_iroha(result), "A")
 
-    return result
+    return
 
 
 

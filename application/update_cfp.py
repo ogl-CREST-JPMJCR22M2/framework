@@ -12,6 +12,13 @@ import SQLexecutor as SQLexe
 import write_to_db as w
 
 
+# ======== DataFrameの表示の仕方 ======== #
+pl.Config.set_tbl_cols(-1)
+pl.Config.set_tbl_rows(-1)
+pl.Config.set_fmt_str_lengths(n=64)
+# ===================================== #
+
+
 
 # ====== パス（変更対象部品）の取得 ====== #
 
@@ -40,6 +47,7 @@ def get_path(target_part, peer):
     target_tree = all_tree.filter(pl.col("parents_partid").is_in(parents_list)) # 必要なとこだけ抽出
 
     return parents_list, target_tree
+
 
 
 # ====== ハッシュの再計算 ====== #
@@ -101,6 +109,7 @@ def update_hash(target_part, new_cfp):
 
         new_hash = recalcu_hash(tree, target_part)
 
+        # new_hashでdataframeをupdate
         tree = tree.with_columns(
             pl.when(pl.col("partid") == target_part)
             .then(pl.lit(new_hash))
@@ -110,7 +119,12 @@ def update_hash(target_part, new_cfp):
 
         new_cfp = None # 一回目だけnew_cfpを更新するため
 
-    return tree.filter(pl.col("partid").is_in(path))["partid", "hash"]
+    result = tree.filter(pl.col("partid").is_in(path))["partid", "hash"]
+
+    # Irohaコマンドで書き込み
+    SQLexe.IROHA_CMDexe(w.to_iroha(result), "A")
+
+    return 
     
 
 print(update_hash("P6", 0.2))

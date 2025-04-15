@@ -7,6 +7,50 @@ from psycopg2.extras import execute_values
 import SQLexecutor as SQLexe
 
 
+
+### irohaに渡すためのデータ加工
+
+def to_iroha(df):
+
+    to_list = df.select(["partid", "hash"]).rows()
+
+    to_sql = ',\n'.join(
+            f"('{partid}', '{hash}')" for partid, hash in to_list
+        )
+
+    return to_sql
+
+
+### offchaindbのcfpの更新
+
+def update_cfp_to_off(peer, target_part, cfp = None, sabun = None):
+
+    if sabun != None and cfp == None:
+
+        sql_statement = sql.SQL(
+            """
+            UPDATE cfpval set totalcfp = {sabun} + totalcfp where partid = {target_part};
+            """
+        ).format(
+            target_part = sql.Literal(target_part),
+            sabun = sql.Literal(sabun)
+        )
+
+    elif sabun != None and cfp != None:
+
+        sql_statement = sql.SQL(
+            """
+            UPDATE cfpval set (totalcfp, cfp) = (totalcfp + {sabun}, {cfp}) where partid = {target_part};
+            """
+        ).format(
+            target_part = sql.Literal(target_part),
+            sabun = sql.Literal(sabun),
+            cfp = sql.Literal(cfp)
+        )
+
+    SQLexe.COMMANDexecutor_off(sql_statement, peer)
+
+
 ### まとめてhashをUPSERT
 
 def upsert_hash_exe(df, peer):
@@ -52,31 +96,3 @@ def upsert_hash(partid, hash_val, peer):
     SQLexe.COMMANDexecutor_on(upsert_sql, peer)
     
 
-### offchaindbのcfpの更新
-
-def update_cfp_to_off(peer, target_part, cfp = None, sabun = None):
-
-    if sabun != None and cfp == None:
-
-        sql_statement = sql.SQL(
-            """
-            UPDATE cfpval set totalcfp = {sabun} + totalcfp where partid = {target_part};
-            """
-        ).format(
-            target_part = sql.Literal(target_part),
-            sabun = sql.Literal(sabun)
-        )
-
-    elif sabun != None and cfp != None:
-
-        sql_statement = sql.SQL(
-            """
-            UPDATE cfpval set (totalcfp, cfp) = (totalcfp + {sabun}, {cfp}) where partid = {target_part};
-            """
-        ).format(
-            target_part = sql.Literal(target_part),
-            sabun = sql.Literal(sabun),
-            cfp = sql.Literal(cfp)
-        )
-
-    SQLexe.COMMANDexecutor_off(sql_statement, peer)

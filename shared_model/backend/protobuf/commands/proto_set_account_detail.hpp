@@ -9,7 +9,6 @@
 #include "interfaces/commands/set_account_detail.hpp"
 
 #include "commands.pb.h"
-#include "interfaces/common_objects/emissions.hpp"
 
 namespace shared_model {
   namespace proto {

@@ -7,8 +7,6 @@
 #define IROHA_SHARED_MODEL_SET_ACCOUNT_DETAIL_HPP
 
 #include "interfaces/base/model_primitive.hpp"
-
-#include "interfaces/common_objects/emissions.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
