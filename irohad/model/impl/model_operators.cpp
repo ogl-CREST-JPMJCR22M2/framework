@@ -99,7 +99,7 @@ namespace iroha {
         return false;
       auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
       return subtract_asset_quantity.account_id == account_id
-          and subtract_asset_quantity.parts_id == parts_id
+          and subtract_asset_quantity.part_id == part_id
           and subtract_asset_quantity.hash_val == hash_val;
     }
 

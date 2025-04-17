@@ -13,6 +13,9 @@
 #include <string>
 #include <vector>
 
+// 追加
+#include <google/protobuf/repeated_field.h> 
+
 namespace shared_model {
 
   namespace crypto {
@@ -85,6 +88,12 @@ namespace shared_model {
       using PartsIdType = std::string;
       /// Type of account detail key
       using HashvalType = std::string;
+
+      /// Type of account detail key
+      using PartListType = google::protobuf::RepeatedPtrField<std::string>;
+      /// Type of account detail key
+      using HashListType = google::protobuf::RepeatedPtrField<std::string>;
+
       /// Type of account detail value
       using AccountDetailValueType = std::string;
       // TODO igor-egorov 28.05.2019 IR-520 Inconsistent C++/Protobuf type sizes

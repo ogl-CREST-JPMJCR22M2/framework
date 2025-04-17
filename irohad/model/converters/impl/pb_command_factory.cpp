@@ -188,7 +188,7 @@ namespace iroha {
           const model::SubtractAssetQuantity &subtract_asset_quantity) {
         protocol::SubtractAssetQuantity pb_subtract_asset_quantity;
         pb_subtract_asset_quantity.set_account_id(subtract_asset_quantity.account_id);
-        pb_subtract_asset_quantity.set_parts_id(subtract_asset_quantity.parts_id);
+        pb_subtract_asset_quantity.set_part_id(subtract_asset_quantity.part_id);
         pb_subtract_asset_quantity.set_hash_val(subtract_asset_quantity.hash_val);
         return pb_subtract_asset_quantity;
       }
@@ -198,7 +198,7 @@ namespace iroha {
           const protocol::SubtractAssetQuantity &pb_subtract_asset_quantity) {
         model::SubtractAssetQuantity subtract_asset_quantity;
         subtract_asset_quantity.account_id =pb_subtract_asset_quantity.account_id();
-        subtract_asset_quantity.parts_id = pb_subtract_asset_quantity.parts_id();
+        subtract_asset_quantity.part_id = pb_subtract_asset_quantity.part_id();
         subtract_asset_quantity.hash_val = pb_subtract_asset_quantity.hash_val();
         return subtract_asset_quantity;
       }

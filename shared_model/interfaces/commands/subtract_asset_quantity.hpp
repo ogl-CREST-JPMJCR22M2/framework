@@ -24,9 +24,9 @@ namespace shared_model {
       /**
        * @return quantity of asset for subtracting
        */
-      virtual const types::PartsIdType &partsId() const = 0;
+      virtual const types::PartListType &partId() const = 0;
 
-      virtual const types::HashvalType &hashVal() const = 0;
+      virtual const types::HashListType &hashVal() const = 0;
 
       std::string toString() const override;
 

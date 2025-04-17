@@ -416,8 +416,8 @@ func addAssetQuantity(ctx native.Context, args addAssetQuantityArgs) (addAssetQu
 
 type subtractAssetQuantityArgs struct {
 	Account string
-	Id     string
-	Hashval String
+	Id     []string
+	Hashval []string
 }
 
 type subtractAssetQuantityRets struct {

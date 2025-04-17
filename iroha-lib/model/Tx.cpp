@@ -3,6 +3,9 @@
 #include <fstream>
 #include <utility>
 
+// 追加
+#include <google/protobuf/repeated_field.h> 
+
 #include "grpc_client/GrpcClient.hpp"
 #include "model/converters/pb_common.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
@@ -169,7 +172,7 @@ Tx& Tx::revokePermission(
 
 Tx& Tx::setAccountDetail(
         const std::string& account_id,
-        const std::string& part_id)
+        const std::string& parts_id)
 {
     auto cmd = cmd_generator_.generateSetAccountDetail(
                 account_id,
@@ -191,12 +194,12 @@ Tx& Tx::setAccountQuorum(
 
 Tx& Tx::subtractAssetQuantity(
         const std::string& account_id,
-        const std::string& part_id,
-        const std::string& hash_val)
+        const google::protobuf::RepeatedPtrField<std::string>& part_id,
+        const google::protobuf::RepeatedPtrField<std::string>& hash_val)
 {
     auto cmd = cmd_generator_.generateSubtractAssetQuantity(
                 account_id,
-                parts_id,
+                part_id,
                 hash_val);
     addCommand(*cmd);
     return *this;

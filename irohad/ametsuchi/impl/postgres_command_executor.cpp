@@ -9,6 +9,10 @@
 #include <forward_list>
 #include <memory>
 
+#include <google/protobuf/repeated_field.h>
+#include <string>
+#include <vector>
+
 #include <fmt/core.h>
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/algorithm/string.hpp>
@@ -474,6 +478,14 @@ namespace iroha {
             soci::use(value ? kPgTrue : kPgFalse, argument_name));
         addArgumentToString(argument_name, std::to_string(value));
       }
+
+      void use(const std::string &argument_name,
+        const google::protobuf::RepeatedPtrField<std::string> &repeated_value) {
+          std::vector<std::string> values(repeated_value.begin(), repeated_value.end());
+          statement_.exchange(soci::use(values, argument_name));
+          addArgumentToString(argument_name,
+                              boost::algorithm::join(values, ", "));
+        }
 
       // TODO IR-597 mboldyrev 2019.08.10: build args string on demand
       void addArgumentToString(std::string_view argument_name,
@@ -1367,8 +1379,8 @@ namespace iroha {
           WITH %s
             new_hashs AS (
               SELECT
-                unnest(:parts_id::text[]) AS partid,
-                unnest(:hash_vals::text[]) AS hash
+                UNNEST(:partid::text[]) AS partid,
+                UNNEST(:hashval::text[]) AS hash
              ),
             checks AS -- error code and check result
             (
@@ -2008,7 +2020,7 @@ namespace iroha {
         shared_model::interface::types::CommandIndexType cmd_index,
         bool do_validation) {
       auto &account_id = command.accountId();
-      auto &part_id = command.partsId();
+      auto &part_id = command.partId();
       auto &hash_val = command.hashVal();
       //auto datalink = 'postgresA';
 
@@ -2023,6 +2035,11 @@ namespace iroha {
         static const std::string genesis_creator_account_id = "genesis";
         executor.use("creator", genesis_creator_account_id);
       }
+
+      //std::vector<std::string> vec(part_id.begin(), part_id.end());
+
+      //part_id = "P0, P1, P2"
+      //hash_val = "abc, efg, hij"
 
       executor.use("partid", part_id);
       executor.use("hashval", hash_val);

@@ -215,9 +215,11 @@ namespace shared_model {
         return aggregateErrors(
             "SubtractAssetQuantity",
             {},
-            {validator_.validateAccountId(subtract_asset_quantity.accountId()),
-             validator_.validatePartsIdType(subtract_asset_quantity.partsId()),
-             validator_.validateHashvalType(subtract_asset_quantity.hashVal())});
+            {validator_.validateAccountId(subtract_asset_quantity.accountId())
+              //,
+              //validator_.validatePartListType(subtract_asset_quantity.partId()),
+              //validator_.validateHashListType(subtract_asset_quantity.hashVal())
+            });
       }
 
       std::optional<ValidationError> operator()(

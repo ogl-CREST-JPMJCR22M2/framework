@@ -19,9 +19,9 @@ namespace shared_model {
 
       const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::PartsIdType &partsId() const override;
+      const interface::types::PartListType &partId() const override;
 
-      const interface::types::HashvalType &hashVal() const override;
+      const interface::types::HashListType &hashVal() const override;
 
 
      private:

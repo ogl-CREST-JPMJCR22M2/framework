@@ -62,11 +62,11 @@ func AddAssetQuantity(asset string, amount string) error {
 	return handleErrors(commandResult, err, "AddAssetQuantity")
 }
 
-func SubtractAssetQuantity(account string, id string, hashval string ) error {
+func SubtractAssetQuantity(account string, id []string, hashval []string ) error {
 	command := &pb.Command{Command: &pb.Command_SubtractAssetQuantity{
 		SubtractAssetQuantity: &pb.SubtractAssetQuantity{
 			AccountId: account,
-			PartsId:       id,
+			PartId:       id,
 			Hashval:    hashval, 
 		}}}
 	commandResult, err := makeProtobufCmdAndExecute(IrohaCommandExecutor, command)

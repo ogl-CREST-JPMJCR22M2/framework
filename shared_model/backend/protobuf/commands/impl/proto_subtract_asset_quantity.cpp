@@ -16,12 +16,12 @@ namespace shared_model {
       return subtract_asset_quantity_.account_id();
     }
 
-    const interface::types::PartsIdType &SubtractAssetQuantity::partsId()
+    const interface::types::PartListType &SubtractAssetQuantity::partId()
         const {
-      return subtract_asset_quantity_.parts_id();
+      return subtract_asset_quantity_.part_id();
     }
 
-    const interface::types::HashvalType &SubtractAssetQuantity::hashVal()
+    const interface::types::HashListType &SubtractAssetQuantity::hashVal()
         const {
       return subtract_asset_quantity_.hash_val();
     }

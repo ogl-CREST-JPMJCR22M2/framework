@@ -6,6 +6,9 @@
 #include "crypto/keypair.hpp"
 #include "generators/CommandGenerator.hpp"
 
+// 追加
+#include <google/protobuf/repeated_field.h> 
+
 
 namespace iroha_lib {
 
@@ -83,8 +86,8 @@ public:
             uint32_t quorum);
     Tx& subtractAssetQuantity(
             const std::string& account_id,
-            const std::string& parts_id,
-            const std::string& hash_val);
+            const google::protobuf::RepeatedPtrField<std::string>& part_id,
+            const google::protobuf::RepeatedPtrField<std::string>& hash_val);
     Tx& transferAsset(
             const std::string& account_id,
             const std::string& dest_account_id,

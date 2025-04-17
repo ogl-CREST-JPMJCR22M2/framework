@@ -124,6 +124,13 @@ namespace shared_model {
     
       std::optional<ValidationError> validateHashvalType(
           const interface::types::HashvalType &hash_val) const;
+    
+ /*     std::optional<ValidationError> validatePartListType(
+           const interface::types::PartListType &part_id) const;
+      
+      std::optional<ValidationError> validateHashlistType(
+           const interface::types::HashListType &hash_val) const;
+*/
         
       std::optional<ValidationError> validateAccountDetailValue(
           const interface::types::AccountDetailValueType &value) const;

@@ -3,6 +3,8 @@
 
 #include "commands.pb.h"
 #include <optional>
+// 追加
+#include <google/protobuf/repeated_field.h> 
 
 
 namespace iroha_lib {
@@ -67,8 +69,8 @@ public:
             const std::string& account_id, uint32_t quorum);
     std::shared_ptr<Command> generateSubtractAssetQuantity(
             const std::string& account_id,
-            const std::string& parts_id,
-            const std::string& hash_val);
+            const google::protobuf::RepeatedPtrFieldstd::string& part_id,
+            const google::protobuf::RepeatedPtrFieldstd::string& hash_val);
     std::shared_ptr<Command> generateTransferAsset(
             const std::string& account_id,
             const std::string& dest_account_id,
