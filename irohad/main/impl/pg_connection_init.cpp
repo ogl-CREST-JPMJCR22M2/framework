@@ -286,7 +286,7 @@ CREATE TABLE partrelationship (
     partid CHARACTER varying(288) references partinfo(partid),
     parents_partid CHARACTER varying(288),
     priority int,
-    duplicates DECIMAL NOT NULL
+    PRIMARY KEY (partid)
 );
 
 CREATE INDEX index_relation ON partinfo (partid);

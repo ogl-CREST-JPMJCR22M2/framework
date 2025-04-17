@@ -5,6 +5,8 @@ import polars as pl
 import time
 import random
 import hashlib
+
+import SQLexecutor as SQLexe
 import write_to_db as w
 
 
@@ -130,8 +132,6 @@ def compute_parent_hashes(df):
             .alias("hash")
         )
     
-    print(df["partid", "hash"])
-            
     return df
 
 
@@ -158,10 +158,15 @@ def make_merkltree(root_partid):
 
     result = compute_parent_hashes(df) # マークル木を計算
 
-    # Irohaコマンドで書き込み
-    SQLexe.IROHA_CMDexe(w.to_iroha(result), "A")
+    print(result)
+    # irohaが完成するまで
+    #w.upsert_hash_exe(result["partid", "hash"], "A")
+    part_list, hash_list = w.to_iroha(result)
 
-    return
+    # Irohaコマンドで書き込み
+    SQLexe.IROHA_CMDexe(part_list, hash_list, "A")
+
+    return result
 
 
 

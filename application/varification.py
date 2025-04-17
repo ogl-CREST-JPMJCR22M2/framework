@@ -11,7 +11,7 @@ def get_hash_df(peer):
 
     engine = create_engine("postgresql://postgres:mysecretpassword@postgres"+peer+":5432/iroha_default")
 
-    sql_statement =" SELECT partid, hash FROM totalcfpval;"
+    sql_statement =" SELECT partid, hash FROM merkle_tree;"
 
     df = pl.read_database(sql_statement, engine)
     
@@ -21,6 +21,7 @@ def get_hash_df(peer):
 # 既存のhashval(onchain-dbから取得)とアンチ結合を使うことで比較
 
 def varification(df_pre, df_new):
+
 
     df_joined = df_new.join(df_pre, on = "hash", how = "anti")
 
@@ -37,4 +38,9 @@ if __name__ == '__main__':
 
     root_partid = "P0"
 
+    start = time.time()
+    
     varification(get_hash_df("A"), cal.make_merkltree(root_partid))
+
+    t = time.time() - start
+    print("time:", t)

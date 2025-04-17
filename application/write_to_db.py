@@ -12,13 +12,10 @@ import SQLexecutor as SQLexe
 
 def to_iroha(df):
 
-    to_list = df.select(["partid", "hash"]).rows()
+    part_list = df["partid"].to_list()
+    hash_list = df["hash"].to_list()
 
-    to_sql = ',\n'.join(
-            f"('{partid}', '{hash}')" for partid, hash in to_list
-        )
-
-    return to_sql
+    return part_list, hash_list
 
 
 ### offchaindbのcfpの更新

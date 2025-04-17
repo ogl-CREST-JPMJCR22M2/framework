@@ -6,6 +6,7 @@ import polars as pl
 from psycopg2 import sql
 import hashlib
 from decimal import *
+import time
 
 import calculation as c
 import SQLexecutor as SQLexe
@@ -122,9 +123,23 @@ def update_hash(target_part, new_cfp):
     result = tree.filter(pl.col("partid").is_in(path))["partid", "hash"]
 
     # Irohaコマンドで書き込み
-    SQLexe.IROHA_CMDexe(w.to_iroha(result), "A")
+    #SQLexe.IROHA_CMDexe(w.to_iroha(result), "A")
+    # irohaが完成するまで
+    w.upsert_hash_exe(result, "A")
 
     return 
     
 
-print(update_hash("P6", 0.2))
+
+# ======== MAIN ======== #
+
+if __name__ == '__main__':
+
+    start = time.time()
+
+    update_hash("P3", 0.250)
+    
+    t = time.time() - start
+    print("time:", t)
+
+    
