@@ -482,7 +482,8 @@ namespace iroha {
       void use(const std::string &argument_name,
         const google::protobuf::RepeatedPtrField<std::string> &repeated_value) {
           std::vector<std::string> values(repeated_value.begin(), repeated_value.end());
-          statement_.exchange(soci::use(values, argument_name));
+          statement_.exchange(
+              soci::use(values, argument_name));
           addArgumentToString(argument_name,
                               boost::algorithm::join(values, ", "));
         }
@@ -1379,14 +1380,17 @@ namespace iroha {
           WITH %s
             new_hashs AS (
               SELECT
-                UNNEST(:partid::text[]) AS partid,
-                UNNEST(:hashval::text[]) AS hash
-             ),
+                  partid, hash
+              FROM
+                  UNNEST(:partid::text[]) WITH ORDINALITY AS p(partid, ord)
+                  JOIN UNNEST(:hashval::text[]) WITH ORDINALITY AS h(hash, ord)
+                  USING (ord)
+            ),
             checks AS -- error code and check result
             (
-                SELECT 3 code, count(1) = 1 result
-                FROM new_hashs n, merkle_tree m
-                WHERE m.partid = n.partid
+                SELECT 
+                  3 code, bool_and( exists (select partid from merkle_tree where merkle_tree.partid = new_hashs.partid) ) result
+                FROM new_hashs
             ),
             inserted AS
             (
@@ -2035,11 +2039,6 @@ namespace iroha {
         static const std::string genesis_creator_account_id = "genesis";
         executor.use("creator", genesis_creator_account_id);
       }
-
-      //std::vector<std::string> vec(part_id.begin(), part_id.end());
-
-      //part_id = "P0, P1, P2"
-      //hash_val = "abc, efg, hij"
 
       executor.use("partid", part_id);
       executor.use("hashval", hash_val);

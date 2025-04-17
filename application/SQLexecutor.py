@@ -1,7 +1,7 @@
 from typing import Optional
 from psycopg2 import connect, sql
 from psycopg2._psycopg import connection, cursor
-from iroha import Iroha, IrohaCrypto, IrohaGrpc
+from iroha import Iroha, IrohaCrypto, IrohaGrpc, commands_pb2, endpoint_pb2, transaction_pb2
 
 iroha = Iroha('admin@test')
 priv_key = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
@@ -94,7 +94,7 @@ def COMMANDexecutor_on(SQL, peer):
             conn.close()
 
 
-def IROHA_CMDexe(part_id, hash_val, peer, cmd = "SubtractAssetQuantity"): #peer:executing peer
+def IROHA_CMDexe(part_list, hash_list, peer, cmd = "SubtractAssetQuantity"): #peer:executing peer
     
     if peer[8:] == 'A':
         net = IrohaGrpc('192.168.32.2:50051')
@@ -103,14 +103,24 @@ def IROHA_CMDexe(part_id, hash_val, peer, cmd = "SubtractAssetQuantity"): #peer:
     else :
         net = IrohaGrpc('192.168.32.4:50051')
 
-    tx = iroha.transaction(
+    """tx = iroha.transaction(
         [iroha.command(
             cmd,
             account_id = 'admin@test',
-            parts_id = part_id,
-            hash_val = hash_val
+            part_id = ['P0', 'P1', 'P2'],
+            hash_val = ['hash0', 'hash1', 'hash2']
         )]
-    )
+    )"""
+
+    cmd = commands_pb2.Command()
+    cmd.subtract_asset_quantity.account_id = 'admin@test'
+    cmd.subtract_asset_quantity.part_id.extend(['P0', 'P1'])
+    cmd.subtract_asset_quantity.hash_val.extend(['hash0', 'hash1'])
+
+    print(cmd.subtract_asset_quantity.part_id)
+
+    # トランザクション作成
+    tx = iroha.transaction([cmd])
 
     IrohaCrypto.sign_transaction(tx, priv_key)
     net.send_tx(tx)
