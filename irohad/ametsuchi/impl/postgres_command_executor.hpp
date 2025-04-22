@@ -235,6 +235,7 @@ namespace iroha {
           bool do_validation);
 
      private:
+
       class CommandStatements;
       class StatementExecutor;
 

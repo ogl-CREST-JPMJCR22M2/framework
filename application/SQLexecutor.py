@@ -114,8 +114,8 @@ def IROHA_CMDexe(part_list, hash_list, peer, cmd = "SubtractAssetQuantity"): #pe
 
     cmd = commands_pb2.Command()
     cmd.subtract_asset_quantity.account_id = 'admin@test'
-    cmd.subtract_asset_quantity.part_id.extend(['P0', 'P1'])
-    cmd.subtract_asset_quantity.hash_val.extend(['hash0', 'hash1'])
+    cmd.subtract_asset_quantity.part_id.extend(['P0'])
+    cmd.subtract_asset_quantity.hash_val.extend(['hash0'])
 
     print(cmd.subtract_asset_quantity.part_id)
 

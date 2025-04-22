@@ -12,6 +12,10 @@
 #include <google/protobuf/repeated_field.h>
 #include <string>
 #include <vector>
+#include <fstream>
+
+//#include "test/test_logger.hpp"
+//#include <gtest/gtest.h>
 
 #include <fmt/core.h>
 #include <soci/postgresql/soci-postgresql.h>
@@ -178,9 +182,17 @@ namespace {
         }
         break;
       }
+      std::ofstream out("/tmp/iroha_sql_error.log", std::ios::app);
+      if (out.is_open()) {
+        out << "[Command] " << command_name << "\n";
+        out << "[Error]   " << error << "\n";
+        out << "[Args]    " << query_args << "\n";
+        out << "----------------------------------------\n";
+        out.close();
     }
+  }
     // parsing is not successful, return the general error
-    return makeCommandError(std::move(command_name), 1, std::move(query_args));
+    return makeCommandError(std::move(command_name), 50, std::move(query_args));
   }
 
   template <typename T>
@@ -1386,25 +1398,19 @@ namespace iroha {
                   JOIN UNNEST(:hashval::text[]) WITH ORDINALITY AS h(hash, ord)
                   USING (ord)
             ),
-            checks AS -- error code and check result
-            (
-                SELECT 
-                  3 code, bool_and( exists (select partid from merkle_tree where merkle_tree.partid = new_hashs.partid) ) result
-                FROM new_hashs
-            ),
             inserted AS
             (
                 UPDATE merkle_tree as m SET hash = n.hash
                 FROM new_hashs n
-                WHERE m.partid = n.partid
-                AND (SELECT bool_and(checks.result) FROM checks) %s
+                WHERE m.partid = n.partid %s
                 RETURNING (1)
             )
           SELECT CASE
               %s
             WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
-            ELSE (SELECT code FROM checks WHERE not result ORDER BY code ASC LIMIT 1)
-            END AS result)",
+            ELSE 1
+            END AS result
+            )",
           {(boost::format(R"(has_role_perm AS (%s),)")
             % checkAccountRolePermission(Role::kSetQuorum, ":creator"))
                .str(),
@@ -2026,7 +2032,6 @@ namespace iroha {
       auto &account_id = command.accountId();
       auto &part_id = command.partId();
       auto &hash_val = command.hashVal();
-      //auto datalink = 'postgresA';
 
       StatementExecutor executor(subtract_asset_quantity_statements_,
                                  do_validation,
@@ -2040,8 +2045,15 @@ namespace iroha {
         executor.use("creator", genesis_creator_account_id);
       }
 
-      executor.use("partid", part_id);
-      executor.use("hashval", hash_val);
+      google::protobuf::RepeatedPtrField<std::string> part_id_;
+      part_id_.Add("P1");
+      part_id_.Add("P2");
+      google::protobuf::RepeatedPtrField<std::string> hash_val_;
+      hash_val_.Add("adf");
+      hash_val_.Add("dfs");
+
+      executor.use("partid", part_id_);
+      executor.use("hashval", hash_val_);
 
       return executor.execute();
     }
