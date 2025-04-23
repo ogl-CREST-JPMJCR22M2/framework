@@ -3,6 +3,8 @@
 
 // 追加
 #include <google/protobuf/repeated_field.h> 
+#include <fstream>
+
 
 
 namespace iroha_lib {
@@ -232,14 +234,14 @@ std::shared_ptr<Command> CommandGenerator::generateSetAccountQuorum(
 
 std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
         const std::string& account_id,
-        const google::protobuf::RepeatedPtrFieldstd::string& part_id,
-        const google::protobuf::RepeatedPtrFieldstd::string& hash_val)
+        const google::protobuf::RepeatedPtrField<std::string>& part_id,
+        const google::protobuf::RepeatedPtrField<std::string>& hash_val)
 {
     SubtractAssetQuantity subtractAssetQuantity;
     subtractAssetQuantity.set_account_id(account_id);
     subtractAssetQuantity.set_parts_id(part_id);
     subtractAssetQuantity.set_hash_val(hash_val);
-
+    
     auto cmd = Command();
     cmd.set_allocated_subtract_asset_quantity(new SubtractAssetQuantity(subtractAssetQuantity));
     return generateCommand<Command>(cmd);

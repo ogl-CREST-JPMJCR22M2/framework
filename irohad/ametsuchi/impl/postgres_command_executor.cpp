@@ -14,9 +14,6 @@
 #include <vector>
 #include <fstream>
 
-//#include "test/test_logger.hpp"
-//#include <gtest/gtest.h>
-
 #include <fmt/core.h>
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/algorithm/string.hpp>
@@ -492,10 +489,27 @@ namespace iroha {
       }
 
       void use(const std::string &argument_name,
-        const google::protobuf::RepeatedPtrField<std::string> &repeated_value) {
-          std::vector<std::string> values(repeated_value.begin(), repeated_value.end());
-          statement_.exchange(
-              soci::use(values, argument_name));
+        const std::vector<std::string> &values) {
+
+          std::string result = "{";
+          for (size_t i = 0; i < values.size(); ++i) {
+              result += "\"" + values[i] + "\"";
+              if (i != values.size() - 1)
+                  result += ",";
+          }
+          result += "}";
+
+          std::ofstream out("/tmp/iroha_sql_error.log", std::ios::app);
+          if (out.is_open()) {
+            out << "[argument_name] " << argument_name << "\n";
+            out << "[result]   " << result << "\n";
+            out << "[type]   " << result << "\n";
+            out << "----------------------------------------\n";
+            out.close();
+          }
+
+          statement_.exchange(soci::use(result, argument_name));
+
           addArgumentToString(argument_name,
                               boost::algorithm::join(values, ", "));
         }
@@ -550,6 +564,7 @@ namespace iroha {
         const std::unique_ptr<soci::session> &session,
         const std::string &base_statement,
         const std::vector<std::string> &permission_checks) {
+
       return std::make_unique<CommandStatements>(
           *session, base_statement, permission_checks);
     }
@@ -2029,9 +2044,16 @@ namespace iroha {
         const std::string &tx_hash,
         shared_model::interface::types::CommandIndexType cmd_index,
         bool do_validation) {
+
       auto &account_id = command.accountId();
       auto &part_id = command.partId();
       auto &hash_val = command.hashVal();
+
+      std::vector<std::string> partid(part_id.begin(), part_id.end());
+      partid.reserve(partid.size());
+
+      std::vector<std::string> hashval(hash_val.begin(), hash_val.end());
+      hashval.reserve(hashval.size());
 
       StatementExecutor executor(subtract_asset_quantity_statements_,
                                  do_validation,
@@ -2045,15 +2067,8 @@ namespace iroha {
         executor.use("creator", genesis_creator_account_id);
       }
 
-      google::protobuf::RepeatedPtrField<std::string> part_id_;
-      part_id_.Add("P1");
-      part_id_.Add("P2");
-      google::protobuf::RepeatedPtrField<std::string> hash_val_;
-      hash_val_.Add("adf");
-      hash_val_.Add("dfs");
-
-      executor.use("partid", part_id_);
-      executor.use("hashval", hash_val_);
+      executor.use("partid", partid);
+      executor.use("hashval", hashval);
 
       return executor.execute();
     }

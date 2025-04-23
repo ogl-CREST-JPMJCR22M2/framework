@@ -69,8 +69,8 @@ public:
             const std::string& account_id, uint32_t quorum);
     std::shared_ptr<Command> generateSubtractAssetQuantity(
             const std::string& account_id,
-            const google::protobuf::RepeatedPtrFieldstd::string& part_id,
-            const google::protobuf::RepeatedPtrFieldstd::string& hash_val);
+            const google::protobuf::RepeatedPtrField<std::string>& part_id,
+            const google::protobuf::RepeatedPtrField<std::string>& hash_val);
     std::shared_ptr<Command> generateTransferAsset(
             const std::string& account_id,
             const std::string& dest_account_id,

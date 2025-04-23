@@ -4,6 +4,7 @@
  */
 
 #include "interfaces/commands/subtract_asset_quantity.hpp"
+#include <fstream>
 
 namespace shared_model {
   namespace interface {
@@ -23,6 +24,7 @@ namespace shared_model {
 
       // partId()（RepeatedPtrField<std::string>）の比較
       if (this->partId().size() != rhs.partId().size()) return false;
+      
       for (int i = 0; i < partId().size(); ++i) {
           if (this->partId().Get(i) != rhs.partId().Get(i)) return false;
       }
