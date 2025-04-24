@@ -111,13 +111,13 @@ def IROHA_CMDexe(part_list, hash_list, peer, cmd = "SubtractAssetQuantity"): #pe
             hash_val = ['hash0', 'hash1', 'hash2']
         )]
     )"""
+    part_id = []
+    hash_val = []
 
     cmd = commands_pb2.Command()
     cmd.subtract_asset_quantity.account_id = 'admin@test'
-    cmd.subtract_asset_quantity.part_id.extend(['P0'])
-    cmd.subtract_asset_quantity.hash_val.extend(['hash0'])
-
-    print(cmd.subtract_asset_quantity.part_id)
+    cmd.subtract_asset_quantity.part_id.extend(['P12', 'P1'])
+    cmd.subtract_asset_quantity.hash_val.extend(['hash121212', 'hash111111'])
 
     # トランザクション作成
     tx = iroha.transaction([cmd])

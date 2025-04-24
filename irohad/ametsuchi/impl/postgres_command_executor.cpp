@@ -487,32 +487,7 @@ namespace iroha {
             soci::use(value ? kPgTrue : kPgFalse, argument_name));
         addArgumentToString(argument_name, std::to_string(value));
       }
-
-      void use(const std::string &argument_name,
-        const std::vector<std::string> &values) {
-
-          std::string result = "{";
-          for (size_t i = 0; i < values.size(); ++i) {
-              result += "\"" + values[i] + "\"";
-              if (i != values.size() - 1)
-                  result += ",";
-          }
-          result += "}";
-
-          std::ofstream out("/tmp/iroha_sql_error.log", std::ios::app);
-          if (out.is_open()) {
-            out << "[argument_name] " << argument_name << "\n";
-            out << "[result]   " << result << "\n";
-            out << "[type]   " << result << "\n";
-            out << "----------------------------------------\n";
-            out.close();
-          }
-
-          statement_.exchange(soci::use(result, argument_name));
-
-          addArgumentToString(argument_name,
-                              boost::algorithm::join(values, ", "));
-        }
+      
 
       // TODO IR-597 mboldyrev 2019.08.10: build args string on demand
       void addArgumentToString(std::string_view argument_name,
@@ -1413,6 +1388,11 @@ namespace iroha {
                   JOIN UNNEST(:hashval::text[]) WITH ORDINALITY AS h(hash, ord)
                   USING (ord)
             ),
+            check_partid AS (
+                SELECT 
+                    bool_and( EXISTS (SELECT partid FROM merkle_tree WHERE merkle_tree.partid = new_hashs.partid) )
+                FROM new_hashs
+            ),
             inserted AS
             (
                 UPDATE merkle_tree as m SET hash = n.hash
@@ -1422,6 +1402,7 @@ namespace iroha {
             )
           SELECT CASE
               %s
+            WHEN NOT EXISTS (SELECT * FROM check_partid) THEN 3
             WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
             ELSE 1
             END AS result
@@ -2049,16 +2030,41 @@ namespace iroha {
       auto &part_id = command.partId();
       auto &hash_val = command.hashVal();
 
+      StatementExecutor executor(subtract_asset_quantity_statements_,
+        do_validation,
+        "SubtractAssetQuantity",
+        perm_converter_);
+
+        
+      // part_idのデータ加工
       std::vector<std::string> partid(part_id.begin(), part_id.end());
       partid.reserve(partid.size());
 
+      std::string partid_ = "{";
+      for (size_t i = 0; i < partid.size(); ++i) {
+          partid_ += partid[i];
+          if (i != partid.size() - 1)
+            partid_ += ",";
+      }
+      partid_ += "}";
+
+      executor.use("partid", partid_);
+
+      // hash_valのデータ加工
       std::vector<std::string> hashval(hash_val.begin(), hash_val.end());
       hashval.reserve(hashval.size());
 
-      StatementExecutor executor(subtract_asset_quantity_statements_,
-                                 do_validation,
-                                 "SubtractAssetQuantity",
-                                 perm_converter_);
+      std::string hashval_ = "{";
+      for (size_t i = 0; i < hashval.size(); ++i) {
+          hashval_ += hashval[i];
+          if (i != hashval.size() - 1)
+            hashval_ += ",";
+      }
+      hashval_ += "}";
+
+      executor.use("hashval", hashval_);
+
+      // creatoridのデータ加工
       if (not creator_account_id.empty()) {
         executor.use("creator", creator_account_id);
       } else {
@@ -2066,9 +2072,6 @@ namespace iroha {
         static const std::string genesis_creator_account_id = "genesis";
         executor.use("creator", genesis_creator_account_id);
       }
-
-      executor.use("partid", partid);
-      executor.use("hashval", hashval);
 
       return executor.execute();
     }
