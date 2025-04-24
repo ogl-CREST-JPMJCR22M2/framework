@@ -22,7 +22,7 @@ pl.Config.set_fmt_str_lengths(n=30)
 # offchainに接続，cfpをget
 def get_cfpval(peer):
 
-    engine = create_engine("postgresql://postgres:mysecretpassword@postgres"+peer+":5432/offchaindb")
+    engine = create_engine("postgresql://postgres:mysecretpassword@"+peer+":5432/offchaindb")
 
     sql_statement =" SELECT partid, cfp FROM cfpval;"
 
@@ -33,7 +33,7 @@ def get_cfpval(peer):
 # offchainから全てのcfpをget，結合
 def join_cfpvals(peers):
 
-    df1 = get_cfpval("A")
+    df1 = get_cfpval("postgresA")
 
     for p in peers[1:]:
         df2 = get_cfpval(p)
@@ -45,7 +45,7 @@ def join_cfpvals(peers):
 
 def get_part_tree(peer, parents_partid):
 
-    engine = create_engine("postgresql://postgres:mysecretpassword@postgres"+peer+":5432/iroha_default")
+    engine = create_engine("postgresql://postgres:mysecretpassword@"+peer+":5432/iroha_default")
 
     sql_statement ="SELECT partid, parents_partid, priority FROM partrelationship;"
 
@@ -136,11 +136,11 @@ def compute_parent_hashes(df):
 
 
 
-def make_merkltree(root_partid):
+def make_merkltree(assembler, root_partid):
 
-    peers = ["A", "B", "C"]
+    peers = ["postgresA", "postgresB", "postgresC"]
 
-    df = get_part_tree(peers[0], root_partid) # root_partidがルートの部品木の抽出
+    df = get_part_tree(assembler, root_partid) # root_partidがルートの部品木の抽出
 
     df_h=join_cfpvals(peers) # cfpvalの取得
 
@@ -158,13 +158,12 @@ def make_merkltree(root_partid):
 
     result = compute_parent_hashes(df) # マークル木を計算
 
-    print(result)
-    # irohaが完成するまで
-    #w.upsert_hash_exe(result["partid", "hash"], "A")
-    part_list, hash_list = w.to_iroha(result)
+    #print(result)
+    # irohaが完成するまで w.upsert_hash_exe(result["partid", "hash"], "A")
 
     # Irohaコマンドで書き込み
-    SQLexe.IROHA_CMDexe(part_list, hash_list, "A")
+    part_list, hash_list = w.to_iroha(result)
+    SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
 
     return result
 
@@ -175,16 +174,18 @@ def make_merkltree(root_partid):
 if __name__ == '__main__':
 
     root_partid = 'P0'
+    assembler = w.get_Assebler(root_partid)
 
     start = time.time()
 
-    df = make_merkltree(root_partid)
+    df = make_merkltree(assembler, root_partid)
     
     t = time.time() - start
     print("time:", t)
 
     #totalCFPの算出
-    df_total = df.select(pl.col("cfp").sum()).item()
+    df_total = df.select(pl.col("cfp").sum()).item() # 算出
+    w.update_cfp_to_off(assembler, root_partid, totalcfp = df_total) # update
     print("sum:", df_total)
     
 

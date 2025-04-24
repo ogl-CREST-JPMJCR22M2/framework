@@ -94,7 +94,7 @@ def COMMANDexecutor_on(SQL, peer):
             conn.close()
 
 
-def IROHA_CMDexe(part_list, hash_list, peer, cmd = "SubtractAssetQuantity"): #peer:executing peer
+def IROHA_CMDexe(peer, part_list, hash_list, cmd = "SubtractAssetQuantity"): #peer:executing peer
     
     if peer[8:] == 'A':
         net = IrohaGrpc('192.168.32.2:50051')
@@ -103,21 +103,13 @@ def IROHA_CMDexe(part_list, hash_list, peer, cmd = "SubtractAssetQuantity"): #pe
     else :
         net = IrohaGrpc('192.168.32.4:50051')
 
-    """tx = iroha.transaction(
-        [iroha.command(
-            cmd,
-            account_id = 'admin@test',
-            part_id = ['P0', 'P1', 'P2'],
-            hash_val = ['hash0', 'hash1', 'hash2']
-        )]
-    )"""
     part_id = []
     hash_val = []
 
     cmd = commands_pb2.Command()
     cmd.subtract_asset_quantity.account_id = 'admin@test'
-    cmd.subtract_asset_quantity.part_id.extend(['P12', 'P1'])
-    cmd.subtract_asset_quantity.hash_val.extend(['hash121212', 'hash111111'])
+    cmd.subtract_asset_quantity.part_id.extend(part_list)
+    cmd.subtract_asset_quantity.hash_val.extend(hash_list)
 
     # トランザクション作成
     tx = iroha.transaction([cmd])
@@ -127,10 +119,5 @@ def IROHA_CMDexe(part_list, hash_list, peer, cmd = "SubtractAssetQuantity"): #pe
 
     for status in net.tx_status_stream(tx):
         print(status)
-    
 
-if __name__ == '__main__':
-
-    partid = 'P00100'
-    IROHA_COMMANDexecutor(partid, 'SetAccountDetail','postgresA')
     

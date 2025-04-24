@@ -23,9 +23,9 @@ pl.Config.set_fmt_str_lengths(n=64)
 
 # ====== パス（変更対象部品）の取得 ====== #
 
-def get_path(target_part, peer):
+def get_path(assembler, target_part):
 
-    engine = create_engine("postgresql://postgres:mysecretpassword@postgres"+peer+":5432/iroha_default")
+    engine = create_engine("postgresql://postgres:mysecretpassword@"+assembler+":5432/iroha_default")
     sql_statement ="""
         SELECT r.partid, parents_partid, priority, assembler, hash \
             FROM partrelationship r, partinfo i, merkle_tree m \
@@ -68,16 +68,13 @@ def recalcu_hash(df, partid):
 
 # ====== パスのハッシュとtotalcfpを計算 ====== #
 
-def update_hash(target_part, new_cfp):
+def update_hash(assembler, target_part, new_cfp):
 
     # パスとツリーを取得
-    path, tree = get_path(target_part, "A")
+    path, tree = get_path(assembler, target_part)
 
     ## cfpの差分を計算
     new_cfp =  Decimal(new_cfp).quantize(Decimal('0.0001'), ROUND_HALF_UP) # new_cfpの小数点以下4桁まで表示
-
-    assembler = tree.filter(pl.col("partid") == target_part)["assembler"].item() # assemblerの取得
-
 
     sql_statement = sql.SQL("SELECT cfp FROM cfpval where partid = {target_part};" # 既存のCFPを取得
     ).format(
@@ -86,7 +83,7 @@ def update_hash(target_part, new_cfp):
 
     pre_cfp = SQLexe.QUERYexecutor_off(sql_statement, assembler)[0][0]
 
-    cfp_sabun = new_cfp - pre_cfp #差分を計算
+    cfp_sabun = pre_cfp - new_cfp #差分を計算
 
     ## hash(new_cfp)を書き込み 
 
@@ -105,8 +102,8 @@ def update_hash(target_part, new_cfp):
 
         target_part = path[i]
         
-        assembler = tree.filter(pl.col("partid") == target_part)["assembler"].item() # assemblerを取得
-        w.update_cfp_to_off(assembler, target_part, new_cfp, cfp_sabun) # 新しいtotalCFPを書き込み
+        assembler_path = w.get_Assebler(target_part) # assemblerを取得
+        w.update_cfp_to_off(assembler_path, target_part, new_cfp, cfp_sabun) # 新しいtotalCFPを書き込み
 
         new_hash = recalcu_hash(tree, target_part)
 
@@ -122,10 +119,11 @@ def update_hash(target_part, new_cfp):
 
     result = tree.filter(pl.col("partid").is_in(path))["partid", "hash"]
 
+    # irohaが完成するまで w.upsert_hash_exe(result, "A")
+
     # Irohaコマンドで書き込み
-    #SQLexe.IROHA_CMDexe(w.to_iroha(result), "A")
-    # irohaが完成するまで
-    w.upsert_hash_exe(result, "A")
+    part_list, hash_list = w.to_iroha(result)
+    SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
 
     return 
     
@@ -135,9 +133,12 @@ def update_hash(target_part, new_cfp):
 
 if __name__ == '__main__':
 
+    target_part = "P3"
+    assembler = w.get_Assebler(target_part)
+
     start = time.time()
 
-    update_hash("P3", 0.250)
+    update_hash(assembler, target_part, 0.250)
     
     t = time.time() - start
     print("time:", t)
