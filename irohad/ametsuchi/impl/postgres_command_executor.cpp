@@ -9,10 +9,10 @@
 #include <forward_list>
 #include <memory>
 
-#include <google/protobuf/repeated_field.h>
 #include <string>
 #include <vector>
 #include <fstream>
+#include <chrono>
 
 #include <fmt/core.h>
 #include <soci/postgresql/soci-postgresql.h>
@@ -2033,9 +2033,8 @@ namespace iroha {
       StatementExecutor executor(subtract_asset_quantity_statements_,
         do_validation,
         "SubtractAssetQuantity",
-        perm_converter_);
+        perm_converter_); 
 
-        
       // part_idのデータ加工
       std::vector<std::string> partid(part_id.begin(), part_id.end());
       partid.reserve(partid.size());

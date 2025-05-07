@@ -33,18 +33,15 @@ for arg in args:
                 drop table offchaindb_cfpval;
                 
                 CREATE TABLE IF NOT EXISTS partinfo(
-                        PartID CHARACTER varying(288)
+                        PartID CHARACTER varying(288) PRIMARY KEY
                 );
-
-                insert into partinfo values ('P00003');
 
                 CREATE TABLE IF NOT EXISTS CFPval(
-                        PartID CHARACTER varying(288),
-                        TotalCFP DECIMAL NOT NULL ,
-                        CFP DECIMAL NOT NULL
+                        PartID CHARACTER varying(288) PRIMARY KEY,
+                        TotalCFP DECIMAL(18, 4) NOT NULL ,
+                        CFP DECIMAL(18, 4) NOT NULL
                 );
 
-                insert into CFPval values ('P00003', 0.3, 0.3);
                 """
             )
             

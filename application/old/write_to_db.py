@@ -92,6 +92,51 @@ def get_hash(target_part):
     return SQLexe.QUERYexecutor_on(sql_statement, "postgresA")[0][1]
 
 
+### まとめてhashをUPSERT
+
+def upsert_hash_exe(df, assembler):
+
+    upsert_sql = """
+        INSERT INTO merkle_tree (partid, hash)
+        VALUES %s
+        ON CONFLICT (partid) DO UPDATE SET hash = EXCLUDED.hash;
+    """
+
+    # DB接続
+    conn = connect(
+        dbname = "iroha_default", 
+        user = "postgres", 
+        password = "mysecretpassword",
+        host = assembler,
+        port = 5432
+    )
+
+    with conn.cursor() as cur:
+        data = df.select(["partid", "hash"]).rows()
+        execute_values(cur, upsert_sql, data)
+
+    conn.commit()
+    conn.close()
+
+
+
+### 一回だけhashをUPSERT
+
+def upsert_hash(partid, hash_val, assembler):
+
+    upsert_sql = sql.SQL( """
+        INSERT INTO merkle_tree (partid, hash)
+        VALUES ({partid}, {hash_val})
+        ON CONFLICT (partid) DO UPDATE SET hash = {hash_val};
+    """
+    ).format(
+            partid = sql.Literal(partid),
+            hash_val = sql.Literal(hash_val)
+    )
+
+    SQLexe.COMMANDexecutor_on(upsert_sql, assembler)
+
+
 ### まとめてoffchaindbごとにcfpvalをUPSERT
 
 def upsert_totalcfp_exe(df, assembler):
@@ -121,3 +166,10 @@ def upsert_totalcfp_exe(df, assembler):
 
     conn.commit()
     conn.close()
+    
+
+# ======== MAIN ======== #
+
+if __name__ == '__main__':
+
+    print(get_Assebler('P0'))

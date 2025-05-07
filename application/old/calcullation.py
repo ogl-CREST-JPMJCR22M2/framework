@@ -1,41 +1,20 @@
-### マークルツリーで検証を行う
+### partidを使って求める
 
 from sqlalchemy import create_engine
 import polars as pl
 import time
+import random
 import hashlib
 
-import calculation as c
+import SQLexecutor as SQLexe
 import write_to_db as w
 
-# onchain-dbに接続，merkle treeのdetaframeを取得
 
-def get_hash_df(peer):
-
-    engine = create_engine("postgresql://postgres:mysecretpassword@"+peer+":5432/iroha_default")
-
-    sql_statement =" SELECT partid, hash FROM merkle_tree;"
-
-    df = pl.read_database(sql_statement, engine)
-    
-    return df
-
-
-# 既存のhashval(onchain-dbから取得)とアンチ結合を使うことで比較
-
-def varification(df_pre, df_new):
-
-
-    df_joined = df_new.join(df_pre, on = "hash", how = "anti")
-
-    if len(df_joined) == 0:
-        print("Verification Successfully")
-    else:
-        print("Verification failed")
-        print(df_joined["partid"])
-    
-    return
-
+# ======== DataFrameの表示の仕方 ======== #
+pl.Config.set_tbl_cols(-1)
+pl.Config.set_tbl_rows(-1)
+pl.Config.set_fmt_str_lengths(n=30)
+# ===================================== #
 
 
 # ======== postgresqlに接続して取得する部分 ======== #
@@ -89,6 +68,9 @@ def get_part_tree(peer, parents_partid):
     return df
 
 
+
+
+
 # ======== 算出部分 ======== #
 
 # ハッシュ化    
@@ -107,20 +89,18 @@ def compute_parent_hashes(df):
         .alias("hash")
     )
 
-    # 1 子ノードリストを作成
-    child_list = df.select(["partid", "parents_partid"]).group_by("parents_partid").agg(pl.col("partid").alias("child_parts")).rename({"parents_partid": "partid"})
+    # 子ノードリストを作成
+    child_hashes = df.select(["partid", "parents_partid"]).group_by("parents_partid").agg(pl.col("partid").alias("child_parts")).rename({"parents_partid": "partid"})
     
-    df = df.join(child_list, on="partid", how="left")
+    df = df.join(child_hashes, on="partid", how="left")
 
-
-    #  子部品のハッシュの連結
+    # 子部品の連結
     def get_child_hashes(parts: list[str]) -> str:
 
         df_ =  df.filter(pl.col("partid").is_in(parts))
         df_ = df_.sort(["priority"])
 
         hash_values = df_["hash"].to_list()
-
         clean_hashes = []
 
         for h in hash_values:
@@ -141,7 +121,10 @@ def compute_parent_hashes(df):
             .then(
                 pl.concat_str([
                     pl.col("cfp").map_elements(sha256, return_dtype=pl.String),
-                    pl.col("child_parts").map_elements(get_child_hashes, return_dtype=pl.String)
+                    #pl.col("cfp").cast(pl.String),
+                    #pl.lit("("),
+                    pl.col("child_parts").map_elements(get_child_hashes, return_dtype=pl.String),
+                    #pl.lit(")"),
                     ])
                     .map_elements(sha256, return_dtype=pl.String)
             )
@@ -153,7 +136,7 @@ def compute_parent_hashes(df):
 
 
 
-def make_merkltree_varification(assembler, root_partid):
+def make_merkltree(assembler, root_partid):
 
     peers = ["postgresA", "postgresB", "postgresC"]
 
@@ -161,22 +144,54 @@ def make_merkltree_varification(assembler, root_partid):
 
     df_h=join_cfpvals(peers) # cfpvalの取得
 
+    """
+    #確認用
+    df_h = pl.DataFrame(
+        {
+            "partid" : ["P"+str(i) for i in range(0, 156)],
+            "cfp" : [chr(random.randint(0,26) + 97) for i in range(0, 156)]
+            #"cfp" : [i for i in range(0, 156)]
+        }
+    )"""
+
     df = df.join(df_h, on=["partid"], how="left") # 部品木にcfpvalを結合
 
     result = compute_parent_hashes(df) # マークル木を計算
 
-    return result['partid', 'hash']
+    #print(result)
+    # irohaが完成するまで w.upsert_hash_exe(result["partid", "hash"], "A")
+
+    # Irohaコマンドで書き込み
+    part_list, hash_list = w.to_iroha(result)
+    SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
+
+    return result
 
 
+
+# ======== MAIN ======== #
 
 if __name__ == '__main__':
 
-    root_partid = "P0"
+    root_partid = 'P0'
     assembler = w.get_Assebler(root_partid)
 
     start = time.time()
-    
-    varification(get_hash_df("postgresA"), make_merkltree_varification(assembler, root_partid))
 
+    df = make_merkltree(assembler, root_partid)
+    
     t = time.time() - start
     print("time:", t)
+
+    #totalCFPの算出
+    df_total = df.select(pl.col("cfp").sum()).item() # 算出
+    w.update_cfp_to_off(assembler, root_partid, totalcfp = df_total) # update
+    print("sum:", df_total)
+    
+
+
+# ======= 開発用 ======= #
+
+# decimal -> str    
+def to_string(value: float) -> str:
+    return str(value)

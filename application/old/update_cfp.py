@@ -26,31 +26,10 @@ pl.Config.set_fmt_str_lengths(n=64)
 def get_path(assembler, target_part):
 
     engine = create_engine("postgresql://postgres:mysecretpassword@"+assembler+":5432/iroha_default")
-    #sql_statement ="""
-    #    SELECT r.partid, parents_partid, priority, assembler, hash \
-    #        FROM partrelationship r, partinfo i, merkle_tree m \
-    #        WHERE r.partid = i.partid and r.partid = m.partid;
-    #"""
-
-    sql_statement = """
-        WITH part_tree AS(
-            WITH RECURSIVE calc(partid, parents_partid) AS
-                (
-                    SELECT partid, parents_partid, priority
-                    FROM partrelationship r
-                    WHERE partid = 'P0'
-                    UNION ALL
-                    SELECT r.partid, r.parents_partid, r.priority
-                    FROM partrelationship r, calc
-                    WHERE r.parents_partid = calc.partid 
-                )
-                SELECT *
-                FROM calc
-        )
-        SELECT c.partid, parents_partid, priority, assembler, hash
-        FROM part_tree c, partinfo i, merkle_tree m
-        WHERE c.partid = i.partid and c.partid = m.partid;
-            
+    sql_statement ="""
+        SELECT r.partid, parents_partid, priority, assembler, hash \
+            FROM partrelationship r, partinfo i, merkle_tree m \
+            WHERE r.partid = i.partid and r.partid = m.partid;
     """
 
     all_tree = pl.read_database(sql_statement, engine) #木の全体

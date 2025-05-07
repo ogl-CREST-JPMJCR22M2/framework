@@ -8,6 +8,7 @@ import hashlib
 import calculation as c
 import write_to_db as w
 
+
 # onchain-dbに接続，merkle treeのdetaframeを取得
 
 def get_hash_df(peer):
@@ -19,23 +20,6 @@ def get_hash_df(peer):
     df = pl.read_database(sql_statement, engine)
     
     return df
-
-
-# 既存のhashval(onchain-dbから取得)とアンチ結合を使うことで比較
-
-def varification(df_pre, df_new):
-
-
-    df_joined = df_new.join(df_pre, on = "hash", how = "anti")
-
-    if len(df_joined) == 0:
-        print("Verification Successfully")
-    else:
-        print("Verification failed")
-        print(df_joined["partid"])
-    
-    return
-
 
 
 # ======== postgresqlに接続して取得する部分 ======== #
@@ -97,6 +81,8 @@ def sha256(value: float) -> str:
 
 # ハッシュ値を計算する関数
 def compute_parent_hashes(df):
+    
+    pre_def = get_hash_df("postgresA")
 
     # 末端ノードのハッシュ値を決定
     df = df.with_columns(
@@ -107,7 +93,13 @@ def compute_parent_hashes(df):
         .alias("hash")
     )
 
-    # 1 子ノードリストを作成
+    ## 葉ノードだけ検証
+    df_joined = df["partid", "hash"].join(pre_def, on = "hash", how = "anti").filter(pl.col("hash").is_not_null())
+
+    if len(df_joined) > 0 : return df_joined["partid"].to_list()
+
+    
+    # 子ノードリストを作成
     child_list = df.select(["partid", "parents_partid"]).group_by("parents_partid").agg(pl.col("partid").alias("child_parts")).rename({"parents_partid": "partid"})
     
     df = df.join(child_list, on="partid", how="left")
@@ -148,8 +140,13 @@ def compute_parent_hashes(df):
             .otherwise(pl.col("hash"))
             .alias("hash")
         )
-    
-    return df
+
+        ## 他ノードも検証
+        df_joined = df["partid", "hash"].join(pre_def, on = "hash", how = "anti").filter(pl.col("hash").is_not_null())
+
+        if len(df_joined) > 0 : return df_joined["partid"].to_list()
+        
+    return True
 
 
 
@@ -165,8 +162,13 @@ def make_merkltree_varification(assembler, root_partid):
 
     result = compute_parent_hashes(df) # マークル木を計算
 
-    return result['partid', 'hash']
-
+    if result == True:
+        print("Varification Successfully")
+        return None
+    else:
+        print("Varification Failed")
+        #print(result)
+        return result
 
 
 if __name__ == '__main__':
@@ -176,7 +178,7 @@ if __name__ == '__main__':
 
     start = time.time()
     
-    varification(get_hash_df("postgresA"), make_merkltree_varification(assembler, root_partid))
+    make_merkltree_varification(assembler, root_partid)
 
     t = time.time() - start
     print("time:", t)
