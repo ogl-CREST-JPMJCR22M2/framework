@@ -15,7 +15,7 @@ def get_hash_df(peer):
 
     engine = create_engine("postgresql://postgres:mysecretpassword@"+peer+":5432/iroha_default")
 
-    sql_statement =" SELECT partid, hash FROM merkle_tree;"
+    sql_statement =" SELECT partid, hash FROM hash_parts_tree;"
 
     df = pl.read_database(sql_statement, engine)
     

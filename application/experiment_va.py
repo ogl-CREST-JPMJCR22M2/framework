@@ -62,7 +62,7 @@ def upsert_exe(lists, assembler):
 
     sql_statement = sql.SQL(
         """
-        UPDATE cfpval SET cfp = '10000.0' WHERE partid IN ({part_ids});
+        UPDATE cfpval SET co2 = '10000.0' WHERE partid IN ({part_ids});
         """
     ).format(
         part_ids = sql.SQL(', ').join(map(sql.Literal, lists))

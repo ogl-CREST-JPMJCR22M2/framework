@@ -26,7 +26,7 @@ def get_part_tree(peer, peers, root_partid):
 
      # offchain-dbからcfpの算出
     sql_import = " UNION ALL ".join( 
-            ["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, cfp FROM cfpval') AS t1(partid CHARACTER varying(288), cfp DECIMAL)"
+            ["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, co2 FROM cfpval') AS t1(partid CHARACTER varying(288), co2 DECIMAL)"
             for p in peers ])
 
     sql_ =  "WITH plain_cfp AS (" + sql_import + "),"
@@ -46,7 +46,7 @@ def get_part_tree(peer, peers, root_partid):
                         FROM partrelationship r, calc 
                         WHERE r.parents_partid = calc.partid 
                     ) 
-                    SELECT calc.partid, parents_partid, priority, cfp 
+                    SELECT calc.partid, parents_partid, priority, co2 
                     FROM  calc, plain_cfp
                     WHERE calc.partid = plain_cfp.partid
                 ), """
@@ -54,24 +54,24 @@ def get_part_tree(peer, peers, root_partid):
     # totalcfpの算出        
     sql_ =  sql_ + """
         get_totalcfp AS (
-            WITH RECURSIVE subtree_sum(root_id, current_id, cfp) AS 
+            WITH RECURSIVE subtree_sum(root_id, current_id, co2) AS 
                 ( 
                     SELECT 
-                    partid AS root_id, partid AS current_id, cfp
+                    partid AS root_id, partid AS current_id, co2
                     FROM part_tree
 
                     UNION ALL 
 
-                    SELECT ss.root_id, pt.partid AS current_id, pt.cfp
+                    SELECT ss.root_id, pt.partid AS current_id, pt.co2
                     FROM subtree_sum ss, part_tree pt
                     WHERE pt.parents_partid = ss.current_id 
                 ) 
                 SELECT 
-                root_id AS partid, SUM(cfp) AS totalcfp
+                root_id AS partid, SUM(co2) AS cfp
                 FROM subtree_sum
                 GROUP BY root_id
         )
-        SELECT pt.partid, parents_partid, priority, assembler, totalcfp, cfp
+        SELECT pt.partid, parents_partid, priority, assembler, cfp, co2
         FROM part_tree pt, get_totalcfp gt, partinfo i
         WHERE pt.partid = gt.partid AND pt.partid = i.partid;
         """
@@ -100,7 +100,7 @@ def compute_parent_hashes(df):
     # 末端ノードのハッシュ値を決定
     df = df.with_columns(
         pl.when(~pl.col("partid").is_in(df["parents_partid"]))
-        .then(pl.col("cfp").map_elements(sha256, return_dtype=pl.String))
+        .then(pl.col("co2").map_elements(sha256, return_dtype=pl.String))
         .otherwise(None)
         .alias("hash")
     )
@@ -138,7 +138,7 @@ def compute_parent_hashes(df):
             pl.when((pl.col("hash").is_null()) & (pl.col("child_parts").is_not_null()))
             .then(
                 pl.concat_str([
-                    pl.col("cfp").map_elements(sha256, return_dtype=pl.String),
+                    pl.col("co2").map_elements(sha256, return_dtype=pl.String),
                     pl.col("child_parts").map_elements(get_child_hashes, return_dtype=pl.String)
                     ])
                     .map_elements(crc32, return_dtype=pl.String)
@@ -167,7 +167,7 @@ def make_merkltree(assembler, root_partid, write_totalcfp = False):
     # 各offchainに書き込み
     if write_totalcfp == True:
 
-        result_a = result['partid', 'assembler', 'totalcfp'] #必要な列だけ抽出
+        result_a = result['partid', 'assembler', 'cfp'] #必要な列だけ抽出
 
         assembler_list = result_a.unique(subset=['assembler'])['assembler'].to_list()
 

@@ -1223,9 +1223,9 @@ namespace iroha {
             ),
             create_hash AS
             (
-                SELECT encode(digest(sum(new_Totalcfp)::TEXT, 'sha256'), 'hex') || STRING_AGG(merkle_tree.hash, '' ORDER BY merkle_tree.partid) AS join_hash
-                FROM new_quantity, merkle_tree, get_childpart
-                WHERE merkle_tree.partid = get_childpart.child_partid
+                SELECT encode(digest(sum(new_Totalcfp)::TEXT, 'sha256'), 'hex') || STRING_AGG(hash_parts_tree.hash, '' ORDER BY hash_parts_tree.partid) AS join_hash
+                FROM new_quantity, hash_parts_tree, get_childpart
+                WHERE hash_parts_tree.partid = get_childpart.child_partid
             ),
             checks AS -- error code and check result
             (
@@ -1256,7 +1256,7 @@ namespace iroha {
             ),
 	          inserted AS
             (
-                UPDATE merkle_tree SET hash = (encode(digest(join_hash, 'sha256'), 'hex'), new_Totalcfp)
+                UPDATE hash_parts_tree SET hash = (encode(digest(join_hash, 'sha256'), 'hex'), new_Totalcfp)
                 FROM create_hash, new_quantity 
                 WHERE partid=:partid
                 AND (SELECT bool_and(checks.result) FROM checks) %s
@@ -1390,12 +1390,12 @@ namespace iroha {
             ),
             check_partid AS (
                 SELECT 
-                    bool_and( EXISTS (SELECT partid FROM merkle_tree WHERE merkle_tree.partid = new_hashs.partid) )
+                    bool_and( EXISTS (SELECT partid FROM hash_parts_tree WHERE hash_parts_tree.partid = new_hashs.partid) )
                 FROM new_hashs
             ),
             inserted AS
             (
-                UPDATE merkle_tree as m SET hash = n.hash
+                UPDATE hash_parts_tree as m SET hash = n.hash
                 FROM new_hashs n
                 WHERE m.partid = n.partid %s
                 RETURNING (1)

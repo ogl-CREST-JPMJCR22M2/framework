@@ -8,7 +8,7 @@ import SQLexecutor as SQLexe
 
 
 
-### irohaに渡すためのデータ加工
+### irohaに渡すためのデータ加工 rm
 
 def to_iroha(df):
 
@@ -20,13 +20,13 @@ def to_iroha(df):
 
 ### offchaindbのcfpの更新
 
-def update_cfp_to_off(assembler, target_part, cfp = None, totalcfp = None, sabun = None):
+def update_co2_to_off(assembler, target_part, co2 = None, cfp = None, sabun = None):
 
-    if totalcfp == None and cfp == None and sabun != None :
+    if cfp == None and co2 == None and sabun != None :
 
         sql_statement = sql.SQL(
             """
-            UPDATE cfpval SET totalcfp = totalcfp - {sabun} WHERE partid = {target_part};
+            UPDATE cfpval SET cfp = cfp - {sabun} WHERE partid = {target_part};
             """
         ).format(
             target_part = sql.Literal(target_part),
@@ -34,29 +34,29 @@ def update_cfp_to_off(assembler, target_part, cfp = None, totalcfp = None, sabun
         )
         SQLexe.COMMANDexecutor_off(sql_statement, assembler)
 
-    elif totalcfp == None and cfp != None and sabun != None :
+    elif cfp == None and co2 != None and sabun != None :
 
         sql_statement = sql.SQL(
             """
-            UPDATE cfpval set (totalcfp, cfp) = (totalcfp - {sabun}, {cfp}) where partid = {target_part};
+            UPDATE cfpval set (cfp, co2) = (cfp - {sabun}, {co2}) where partid = {target_part};
             """
         ).format(
             target_part = sql.Literal(target_part),
             sabun = sql.Literal(sabun),
-            cfp = sql.Literal(cfp)
+            co2 = sql.Literal(co2)
         )
 
         SQLexe.COMMANDexecutor_off(sql_statement, assembler)
     
-    elif totalcfp != None and cfp == None and sabun == None :
+    elif cfp != None and co2 == None and sabun == None :
 
         sql_statement = sql.SQL(
             """
-            UPDATE cfpval set totalcfp = {totalcfp} where partid = {target_part};
+            UPDATE cfpval set cfp = {cfp} where partid = {target_part};
             """
         ).format(
             target_part = sql.Literal(target_part),
-            totalcfp = sql.Literal(totalcfp)
+            cfp = sql.Literal(cfp)
         )
 
         SQLexe.COMMANDexecutor_off(sql_statement, assembler)
@@ -83,7 +83,7 @@ def get_hash(target_part):
 
     sql_statement = sql.SQL(
             """
-            SELECT hash FROM merkle_tree WHERE partid = {target_part};
+            SELECT hash FROM hash_parts_tree WHERE partid = {target_part};
             """
         ).format(
             target_part = sql.Literal(target_part)
@@ -92,32 +92,3 @@ def get_hash(target_part):
     return SQLexe.QUERYexecutor_on(sql_statement, "postgresA")[0][1]
 
 
-### まとめてoffchaindbごとにcfpvalをUPSERT
-
-def upsert_totalcfp_exe(df, assembler):
-
-    upsert_sql = """
-        UPDATE cfpval AS t
-        SET
-            partid = v.partid,
-            totalcfp = v.totalcfp
-        FROM (VALUES %s)
-        AS v(partid, totalcfp)
-        WHERE v.partid = t.partid;
-    """
-
-    # DB接続
-    conn = connect(
-        dbname = "offchaindb", 
-        user = "postgres", 
-        password = "mysecretpassword",
-        host = assembler,
-        port = 5432
-    )
-
-    with conn.cursor() as cur:
-        data = df.select(["partid", "totalcfp"]).rows()
-        execute_values(cur, upsert_sql, data)
-
-    conn.commit()
-    conn.close()

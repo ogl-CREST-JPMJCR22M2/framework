@@ -38,8 +38,8 @@ for arg in args:
 
                 CREATE TABLE IF NOT EXISTS CFPval(
                         PartID CHARACTER varying(288) PRIMARY KEY,
-                        TotalCFP DECIMAL(18, 4) NOT NULL ,
-                        CFP DECIMAL(18, 4) NOT NULL
+                        cfp DECIMAL(18, 4) NOT NULL ,
+                        co2 DECIMAL(18, 4) NOT NULL
                 );
 
                 """

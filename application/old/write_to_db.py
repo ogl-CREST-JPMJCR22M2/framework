@@ -83,7 +83,7 @@ def get_hash(target_part):
 
     sql_statement = sql.SQL(
             """
-            SELECT hash FROM merkle_tree WHERE partid = {target_part};
+            SELECT hash FROM hash_parts_tree WHERE partid = {target_part};
             """
         ).format(
             target_part = sql.Literal(target_part)
@@ -97,7 +97,7 @@ def get_hash(target_part):
 def upsert_hash_exe(df, assembler):
 
     upsert_sql = """
-        INSERT INTO merkle_tree (partid, hash)
+        INSERT INTO hash_parts_tree (partid, hash)
         VALUES %s
         ON CONFLICT (partid) DO UPDATE SET hash = EXCLUDED.hash;
     """
@@ -125,7 +125,7 @@ def upsert_hash_exe(df, assembler):
 def upsert_hash(partid, hash_val, assembler):
 
     upsert_sql = sql.SQL( """
-        INSERT INTO merkle_tree (partid, hash)
+        INSERT INTO hash_parts_tree (partid, hash)
         VALUES ({partid}, {hash_val})
         ON CONFLICT (partid) DO UPDATE SET hash = {hash_val};
     """

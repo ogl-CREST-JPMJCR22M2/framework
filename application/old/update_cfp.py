@@ -28,7 +28,7 @@ def get_path(assembler, target_part):
     engine = create_engine("postgresql://postgres:mysecretpassword@"+assembler+":5432/iroha_default")
     sql_statement ="""
         SELECT r.partid, parents_partid, priority, assembler, hash \
-            FROM partrelationship r, partinfo i, merkle_tree m \
+            FROM partrelationship r, partinfo i, hash_parts_tree m \
             WHERE r.partid = i.partid and r.partid = m.partid;
     """
 

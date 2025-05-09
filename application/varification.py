@@ -14,7 +14,7 @@ def get_hash_df(peer):
 
     engine = create_engine("postgresql://postgres:mysecretpassword@"+peer+":5432/iroha_default")
 
-    sql_statement =" SELECT partid, hash FROM merkle_tree;"
+    sql_statement =" SELECT partid, hash FROM hash_parts_tree;"
 
     df = pl.read_database(sql_statement, engine)
     
@@ -45,7 +45,7 @@ def get_cfpval(peer):
 
     engine = create_engine("postgresql://postgres:mysecretpassword@"+peer+":5432/offchaindb")
 
-    sql_statement =" SELECT partid, cfp FROM cfpval;"
+    sql_statement =" SELECT partid, co2 FROM cfpval;"
 
     df = pl.read_database(sql_statement, engine)
     
@@ -101,8 +101,8 @@ def compute_parent_hashes(df):
     # 末端ノードのハッシュ値を決定
     df = df.with_columns(
         pl.when(~pl.col("partid").is_in(df["parents_partid"]))
-        .then(pl.col("cfp").map_elements(sha256, return_dtype=pl.String))
-        #.then(pl.col("cfp").cast(pl.String)) #確認用
+        .then(pl.col("co2").map_elements(sha256, return_dtype=pl.String))
+        #.then(pl.col("co2").cast(pl.String)) #確認用
         .otherwise(None)
         .alias("hash")
     )
@@ -140,7 +140,7 @@ def compute_parent_hashes(df):
             pl.when((pl.col("hash").is_null()) & (pl.col("child_parts").is_not_null()))
             .then(
                 pl.concat_str([
-                    pl.col("cfp").map_elements(sha256, return_dtype=pl.String),
+                    pl.col("co2").map_elements(sha256, return_dtype=pl.String),
                     pl.col("child_parts").map_elements(get_child_hashes, return_dtype=pl.String)
                     ])
                     .map_elements(sha256, return_dtype=pl.String)

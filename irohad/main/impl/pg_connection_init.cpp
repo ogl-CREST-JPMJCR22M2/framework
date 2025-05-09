@@ -263,9 +263,9 @@ CREATE TABLE totalcfpval (
     PRIMARY KEY (partid)
 );
 
-CREATE TABLE merkle_tree (
+CREATE TABLE hash_parts_tree (
     partid CHARACTER varying(288) NOT NULL,
-    hash CHARACTER varying(288),
+    hash CHARACTER varying(64),
     PRIMARY KEY (partid)
 );
 
@@ -290,6 +290,37 @@ CREATE TABLE partrelationship (
 );
 
 CREATE INDEX index_relation ON partinfo (partid);
+
+DROP FUNCTION IF EXISTS xor_sha256;
+
+CREATE OR REPLACE FUNCTION xor_sha256(input bytea[])
+RETURNS bytea AS $$
+DECLARE
+    result bytea := repeat(E'\\000', 32);  -- 初期化：32バイトのゼロ
+    current bytea;
+    i int;
+    j int;
+BEGIN
+    IF array_length(input, 1) IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    FOR i IN array_lower(input, 1)..array_upper(input, 1) LOOP
+        current := input[i];
+
+        IF length(current) <> 32 THEN
+            RAISE EXCEPTION 'Each bytea element must be exactly 32 bytes';
+        END IF;
+
+        FOR j IN 0..31 LOOP
+            result := set_byte(result, j, get_byte(result, j) # get_byte(current, j));
+        END LOOP;
+    END LOOP;
+
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
 
 CREATE TABLE role (
     role_id character varying(32),

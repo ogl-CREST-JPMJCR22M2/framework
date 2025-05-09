@@ -28,7 +28,7 @@ def get_path(assembler, target_part):
     engine = create_engine("postgresql://postgres:mysecretpassword@"+assembler+":5432/iroha_default")
     #sql_statement ="""
     #    SELECT r.partid, parents_partid, priority, assembler, hash \
-    #        FROM partrelationship r, partinfo i, merkle_tree m \
+    #        FROM partrelationship r, partinfo i, hash_parts_tree m \
     #        WHERE r.partid = i.partid and r.partid = m.partid;
     #"""
 
@@ -48,7 +48,7 @@ def get_path(assembler, target_part):
                 FROM calc
         )
         SELECT c.partid, parents_partid, priority, assembler, hash
-        FROM part_tree c, partinfo i, merkle_tree m
+        FROM part_tree c, partinfo i, hash_parts_tree m
         WHERE c.partid = i.partid and c.partid = m.partid;
             
     """
@@ -97,7 +97,7 @@ def update_hash(assembler, target_part, new_cfp):
     ## cfpの差分を計算
     new_cfp =  Decimal(new_cfp).quantize(Decimal('0.0001'), ROUND_HALF_UP) # new_cfpの小数点以下4桁まで表示
 
-    sql_statement = sql.SQL("SELECT cfp FROM cfpval where partid = {target_part};" # 既存のCFPを取得
+    sql_statement = sql.SQL("SELECT co2 FROM cfpval where partid = {target_part};" # 既存のCFPを取得
     ).format(
             target_part = sql.Literal(target_part)
     )
@@ -118,15 +118,15 @@ def update_hash(assembler, target_part, new_cfp):
 
 
     ## 順番に処理する
-    totalcfp = None
+    cfp = None
 
     for i in range(len(path)-1):
 
         target_part = path[i]
         
         assembler_path = w.get_Assebler(target_part) # assemblerを取得
-        #print(assembler_path, target_part, new_cfp, totalcfp, cfp_sabun)
-        w.update_cfp_to_off(assembler_path, target_part, new_cfp, totalcfp, cfp_sabun) # 新しいtotalCFPを書き込み
+        #print(assembler_path, target_part, new_cfp, cfp, cfp_sabun)
+        w.update_co2_to_off(assembler_path, target_part, new_cfp, cfp, cfp_sabun) # 新しいtotalCFPを書き込み
 
         new_hash = recalcu_hash(tree, target_part)
 
