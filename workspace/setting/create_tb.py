@@ -30,7 +30,7 @@ for arg in args:
             cur.execute(
                 """
                 
-                drop table offchaindb_cfpval;
+                drop table cfpval;
                 
                 CREATE TABLE IF NOT EXISTS partinfo(
                         PartID CHARACTER varying(288) PRIMARY KEY

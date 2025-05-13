@@ -23,18 +23,7 @@ pl.Config.set_fmt_str_lengths(n=30)
 # ===================================== #
 
 
-def xor_hash(strings):
-    result = bytearray(32)  # SHA-256は32バイト（256ビット）
-    for s in strings:
-        h = bytes.fromhex(s)
-        for i in range(32):
-            result[i] ^= h[i]  # XOR 合成
-    return result.hex()
-
-
-def valification(peer, root_partid):
-
-    peers = ["postgresA", "postgresB", "postgresC"]
+def valification(peer, peers, root_partid):
 
     conn: Optional[connection] = None
     try:
@@ -55,84 +44,110 @@ def valification(peer, root_partid):
                 CREATE TEMP TABLE temp (
                     partid CHARACTER varying(288),
                     parents_partid CHARACTER varying(288),
-                    priority int,
+                    assembler CHARACTER varying(288),
                     cfp DECIMAL, 
-                    hash CHARACTER varying(64),
-                    new_hash CHARACTER varying(64),
+                    co2 DECIMAL,
                     PRIMARY KEY (partid)
                 );
-            """)
 
+                CREATE TEMP TABLE hashvals(
+                    partid CHARACTER varying(288),
+                    can_hashing boolean,
+                    hash bytea[],
+                    PRIMARY KEY (partid)
+                );
+
+                CREATE INDEX idx_temp ON temp(partid);
+                CREATE INDEX idx_hash ON hashvals(partid);
+                CREATE INDEX idx_hash_temp ON hashvals(hash);
+                
+            """)
+            
             ## cfpの算出
             # offchain-dbからcfpの算出
-            cfp_import = " UNION ALL \n".join(["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, cfp FROM cfpval') AS t1(partid CHARACTER varying(288), cfp DECIMAL)" 
+            co2_import = " UNION ALL \n".join(["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, cfp FROM cfpval') AS t1(partid CHARACTER varying(288), cfp DECIMAL)" 
             for p in peers ]) 
         
             sql_ = f"""
-                INSERT INTO temp (partid, parents_partid, priority, cfp, hash, new_hash) 
-                WITH plain_totalcfp AS (
-                    {cfp_import}
+                INSERT INTO temp (partid, parents_partid,  assembler, cfp) 
+                WITH cfpval AS (
+                    {co2_import}
                 ),
                 part_tree AS( 
-                    WITH RECURSIVE calc(partid, parents_partid, priority) AS 
+                    WITH RECURSIVE calc(partid, parents_partid) AS 
                         ( 
-                            SELECT partid, parents_partid, priority
+                            SELECT partid, parents_partid
                             FROM partrelationship r
                             WHERE partid = %s
 
                             UNION ALL 
 
-                            SELECT r.partid, r.parents_partid, r.priority
+                            SELECT r.partid, r.parents_partid
                             FROM partrelationship r, calc 
                             WHERE r.parents_partid = calc.partid 
                         ) 
-                        SELECT calc.partid, parents_partid, priority, cfp, hash, 'null'
-                        FROM  calc, plain_totalcfp pt, hash_parts_tree m
-                        WHERE calc.partid = pt.partid AND calc.partid = m.partid
+                        SELECT calc.partid, parents_partid, cfp
+                        FROM  calc, cfpval
+                        WHERE calc.partid = cfpval.partid
                 )
-                SELECT * FROM part_tree;
+                SELECT pt.partid, parents_partid, assembler, cfp
+                FROM part_tree pt, partinfo i
+                WHERE pt.partid = i.partid;
 
-                UPDATE temp SET new_hash = encode(digest(cfp::TEXT, 'sha256'), 'hex')
-                    WHERE NOT EXISTS (SELECT parents_partid FROM partrelationship WHERE partrelationship.parents_partid = temp.partid);
-
-                SELECT * FROM temp WHERE new_hash = 'null'
+                select * from temp;
             """
-            cur.execute(sql_, (root_partid,))
-            
-            not_hashed = cur.fetchall()
+            cur.execute(sql_, (root_partid, ))
 
-            while len(not_hashed) > 0: 
+            sql_1 = """
+                INSERT INTO hashvals (partid, can_hashing, hash)
+                SELECT partid, 'f', ARRAY[digest(cfp::text, 'sha256')]
+                FROM temp;
 
-                sql_2 = """ 
-                    WITH can_hashing AS (
-                        SELECT parents_partid, bool_and(new_hash != 'null') as result FROM temp
+                UPDATE hashvals SET can_hashing = 't'
+                    WHERE partid  NOT IN (SELECT r.parents_partid FROM partrelationship r, temp WHERE r.parents_partid = temp.partid);
+            """
+            cur.execute(sql_1)
+
+            while True: 
+
+                # 終了条件
+                cur.execute("SELECT partid FROM hashvals WHERE can_hashing = 'f' LIMIT 1;")
+                row = cur.fetchone()
+
+                if not row:
+                    break
+
+                sql_2 = """
+                    WITH get_can_hashing_part AS (
+                        SELECT parents_partid as partid, bool_and(can_hashing) as result, array_agg(hash[1]) AS hash_list
+                        FROM hashvals, temp
+                        WHERE temp.partid = hashvals.partid
                         Group by parents_partid
+                    ),
+                    update_hash AS (
+                        SELECT r1.partid, array_cat(hash, hash_list) AS new_hash
+                        FROM get_can_hashing_part r1, hashvals
+                        WHERE r1.partid = hashvals.partid AND result = 't' AND can_hashing = 'f'
+                    ),
+                    get_xor AS (
+                        SELECT partid, xor_sha256(new_hash) AS result 
+                        FROM update_hash r2
                     )
-                    SELECT temp.parents_partid, array_agg(new_hash)
-                    FROM can_hashing, temp
-                    WHERE result = True AND can_hashing.parents_partid = temp.parents_partid
-                    Group by temp.parents_partid;
+                    UPDATE hashvals SET (can_hashing, hash) = ('t', ARRAY[xor_sha256(new_hash)]) 
+                    FROM update_hash r2
+                    WHERE r2.partid = hashvals.partid;
                 """ 
                 cur.execute(sql_2)
-                queue = cur.fetchall()
-
-                for q in queue:
-                    xor_hashed = xor_hash(q[1])
-
-                    sql_32 = f"UPDATE temp SET new_hash = encode(digest( encode(digest(cfp::TEXT, 'sha256'), 'hex')||'{xor_hashed}' ::TEXT, 'sha256'), 'hex') WHERE partid = %s"
-                    cur.execute(sql_32,  (q[0],))
-                
-                # 終了条件のアップデート
-                sql_4 = "SELECT * FROM temp WHERE new_hash = 'null';"
-                cur.execute(sql_4)
-                not_hashed = cur.fetchall()
 
             sql_5 = """
             WITH valification AS (
-                SELECT partid, hash != new_hash as result FROM temp
+                SELECT hashvals.partid, hpt.hash = encode(hashvals.hash[1], 'hex') as result 
+                FROM hashvals, hash_parts_tree hpt
+                WHERE hashvals.partid = hpt.partid
             )
-            SELECT partid FROM valification WHERE result = 'False';
+            SELECT partid FROM valification WHERE result = 'f';
             """
+
             cur.execute(sql_5)
             data = cur.fetchall()
 
@@ -148,11 +163,13 @@ def valification(peer, root_partid):
 if __name__ == '__main__':
 
     root_partid = 'P0'
+    peers = ["postgresA", "postgresB", "postgresC"]
+
     assembler = w.get_Assebler(root_partid)
 
     start = time.time()
 
-    result = valification(assembler, root_partid)
+    result = valification(assembler, peers, root_partid)
 
     if len(result) == 0:
         print("varification successfully")
@@ -161,3 +178,4 @@ if __name__ == '__main__':
     
     t = time.time() - start
     print("time:", t)
+

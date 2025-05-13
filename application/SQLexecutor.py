@@ -118,6 +118,7 @@ def IROHA_CMDexe(peer, part_list, hash_list, cmd = "SubtractAssetQuantity"): #pe
     net.send_tx(tx)
 
     for status in net.tx_status_stream(tx):
-        print(status)
+        #print(status)
+        pass
 
     

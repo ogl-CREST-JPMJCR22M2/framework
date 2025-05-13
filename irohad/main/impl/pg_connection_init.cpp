@@ -269,7 +269,8 @@ CREATE TABLE hash_parts_tree (
     PRIMARY KEY (partid)
 );
 
-CREATE INDEX index_cfp ON totalcfpval (partid);
+CREATE INDEX idx_hash_onchain ON hash_parts_tree(hash);
+CREATE INDEX idx_hash_partid ON hash_parts_tree (partid);
 
 CREATE EXTENSION dblink;
 CREATE EXTENSION PGCRYPTO;

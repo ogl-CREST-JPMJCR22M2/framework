@@ -6,8 +6,11 @@ import random
 import polars as pl
 from collections import Counter
 import time
+from concurrent.futures import ThreadPoolExecutor
+import sys
+import threading
 
-import update_cfp as u
+import u as u
 import write_to_db as w
 
 
@@ -15,19 +18,17 @@ import write_to_db as w
 np.random.seed(42)
 
 num_total_parts = 19531
-num_transactions = 1000
-update_percent = 1.0 # %で
+num_transactions = 10
+update_percent = [1, 5, 10, 15, 20] # %で
+percent = update_percent[0]
+
 
 # ===== 更新対象部品を選ぶ =======
 parts = [f"P{i}" for i in range(num_total_parts)]
 
 # ランダムに選択
-sampled_parts = random.sample(parts, int(num_total_parts * update_percent * 0.01))
+sampled_parts = random.sample(parts, int(num_total_parts * percent * 0.01))
 num_part = len(sampled_parts)
-
-
-# Uniform distribution: each partition has equal probability
-uniform_transactions = np.random.randint(0, num_part, num_transactions)
 
 # Pareto distribution: skewed access to partitions
 alpha = 1.5
@@ -35,56 +36,40 @@ raw_pareto = np.random.pareto(alpha, num_transactions)
 pareto_transactions = np.floor(num_part * raw_pareto / (raw_pareto.max() + 1e-8)).astype(int)
 
 # ===== インデックスから部品IDに変換 =====
-mapped_parts_u = [sampled_parts[i] for i in uniform_transactions]
 mapped_parts_p = [sampled_parts[i] for i in pareto_transactions]
 
-# ===== カウント集計 =====
-count_u = Counter(mapped_parts_u)
-labels_u, values_u = zip(*count_u.items())
 
-count = Counter(mapped_parts_p)
-labels, values = zip(*count.items())
+# ===== ログ設定 =====
+log_lock = threading.Lock()
+log_path = "./result1.log"
 
+def log(msg):
+    with log_lock:
+        with open(log_path, "a") as f:
+            print(msg, file=f, flush=True)
 
-# Create histograms for visualization
-plt.figure(figsize=(12, 5))
+# ===== トランザクション実行関数 =====
+def exec_transaction(target_part):
+    try:
+        new_cfp = random.random()
+        assembler = w.get_Assebler(target_part)
 
-plt.subplot(1, 2, 1)
-plt.bar(labels_u, values_u, edgecolor='black')
-plt.title('Uniform Distribution of Transactions')
-plt.xlabel('Partid')
-plt.ylabel('Frequency')
+        start = time.time()
+        u.make_merkltree(assembler, target_part, new_cfp)
+        elapsed = time.time() - start
 
-# ===== 棒グラフ描画 =====
-plt.subplot(1, 2, 2)
-plt.bar(labels, values, edgecolor='black')
-plt.xticks(rotation=90)
-plt.title('Pareto Distribution of Transactions (alpha=1.5)')
-plt.xlabel('Partid')
-plt.ylabel('Frequency')
+        log(elapsed)
 
-plt.tight_layout()
-plt.show()
-"""
+    except Exception as e:
+        log(f"Error with {target_part}: {e}")
 
-# Prepare the data for display
-df = pl.DataFrame({
-    'Transaction_ID': range(1, num_transactions + 1),
-    'Uniform_Partition': mapped_parts_u,
-    'Pareto_Partition': mapped_parts_p
-})
+# ===== 実行 =====
+total_start = time.time()
 
-print(df)
+with ThreadPoolExecutor(max_workers=10) as executor:
+    executor.map(exec_transaction, mapped_parts_p)
 
+total_elapsed = time.time() - total_start
 
-start = time.time()
-
-for i in mapped_parts_u:
-
-    assembler = w.get_Assebler(i)
-    u.update_hash(assembler, i, random.random())
-
-t = time.time() - start
-
-print("total time:", t)
-print("average time:", t/num_transactions)"""
+print("total time: ", total_elapsed)
+print("average time:", total_elapsed / num_transactions)

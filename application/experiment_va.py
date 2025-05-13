@@ -14,7 +14,7 @@ import varification_2 as v2
 import SQLexecutor as SQLexe
 
 # ===== リセット =======
-#c.make_merkltree("postgresA", "P0", True)
+c.make_merkltree("postgresA", "P0")
 
 # Set seed for reproducibility
 np.random.seed(42)
@@ -62,7 +62,7 @@ def upsert_exe(lists, assembler):
 
     sql_statement = sql.SQL(
         """
-        UPDATE cfpval SET co2 = '10000.0' WHERE partid IN ({part_ids});
+        UPDATE cfpval SET cfp = '10000.0' WHERE partid IN ({part_ids});
         """
     ).format(
         part_ids = sql.SQL(', ').join(map(sql.Literal, lists))
