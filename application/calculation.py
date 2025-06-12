@@ -1,11 +1,8 @@
 ### partidを使って求める
 
-from sqlalchemy import create_engine, text
-import polars as pl
 import time
 import hashlib
 from decimal import *
-import zlib
 from typing import Optional
 from psycopg2 import connect, sql
 from psycopg2.extras import execute_values
@@ -14,13 +11,6 @@ from collections import defaultdict
 
 import SQLexecutor as SQLexe
 import write_to_db as w
-
-
-# ======== DataFrameの表示の仕方 ======== #
-pl.Config.set_tbl_cols(-1)
-pl.Config.set_tbl_rows(-1)
-pl.Config.set_fmt_str_lengths(n=30)
-# ===================================== #
 
 
 def hash_part_tree(peer, peers, root_partid):

@@ -1,16 +1,13 @@
 ### 1000回の更新トランザクションのうち，更新対象部品が更新される割合をPareto分布に従って決定
 
 import numpy as np
-import matplotlib.pyplot as plt
 import random
 import polars as pl
-from collections import Counter
 import time
 from concurrent.futures import ThreadPoolExecutor
-import sys
 import threading
 
-import u as u
+import update as u
 import write_to_db as w
 
 
@@ -18,9 +15,9 @@ import write_to_db as w
 np.random.seed(42)
 
 num_total_parts = 19531
-num_transactions = 10
+num_transactions = 1953
 update_percent = [1, 5, 10, 15, 20] # %で
-percent = update_percent[0]
+percent = update_percent[3]
 
 
 # ===== 更新対象部品を選ぶ =======
@@ -41,7 +38,7 @@ mapped_parts_p = [sampled_parts[i] for i in pareto_transactions]
 
 # ===== ログ設定 =====
 log_lock = threading.Lock()
-log_path = "./result1.log"
+log_path = "./result15.log"
 
 def log(msg):
     with log_lock:

@@ -92,3 +92,25 @@ def get_hash(target_part):
     return SQLexe.QUERYexecutor_on(sql_statement, "postgresA")[0][1]
 
 
+### 深さを取得
+
+def get_hash():
+
+    sql_statement = """ 
+        WITH RECURSIVE part_tree(partid, depth) AS (
+            SELECT partid, 1
+            FROM partrelationship
+            WHERE parents_partid = 'P0'
+            UNION ALL
+            SELECT pr.partid, pt.depth + 1
+            FROM partrelationship pr
+            JOIN part_tree pt ON pr.parents_partid = pt.partid
+        )
+        SELECT MAX(depth) AS max_depth FROM part_tree;
+    """
+        
+    print(SQLexe.QUERYexecutor_on(sql_statement, "postgresA")[0][0])
+
+
+if __name__ == '__main__':
+    get_hash()

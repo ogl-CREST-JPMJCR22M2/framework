@@ -1,11 +1,8 @@
 ### 
 
-from sqlalchemy import create_engine, text
-import polars as pl
 import time
 import hashlib
 from decimal import *
-import zlib
 from typing import Optional
 from psycopg2 import connect, sql
 from psycopg2.extras import execute_values
@@ -14,13 +11,6 @@ from collections import defaultdict
 
 import SQLexecutor as SQLexe
 import write_to_db as w
-
-
-# ======== DataFrameの表示の仕方 ======== #
-pl.Config.set_tbl_cols(-1)
-pl.Config.set_tbl_rows(-1)
-pl.Config.set_fmt_str_lengths(n=30)
-# ===================================== #
 
 
 def update(peer, peers, target_partid, new_cfp):
@@ -51,12 +41,6 @@ def update(peer, peers, target_partid, new_cfp):
                     assembler CHARACTER varying(288),
                     cfp DECIMAL, 
                     co2 DECIMAL,
-                    PRIMARY KEY (partid)
-                );
-
-                CREATE TEMP TABLE hash_l(
-                    partid CHARACTER varying(288),
-                    hash_list bytea,
                     PRIMARY KEY (partid)
                 );
 
