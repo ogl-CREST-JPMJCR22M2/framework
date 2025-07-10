@@ -182,7 +182,7 @@ def make_merkltree(assembler, root_partid):
     start = time.time()
 
     # Irohaコマンドで書き込み
-    SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
+    #SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
 
     #print("iroha実行",time.time()-start)
     start = time.time()
@@ -230,4 +230,4 @@ if __name__ == '__main__':
     make_merkltree(assembler, root_partid)
     
     t = time.time() - start
-    #print("time:", t)
+    print("time:", t)
