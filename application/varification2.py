@@ -135,7 +135,19 @@ def valification(peer, peers, root_partid):
                 cur.execute(sql_2)
 
             # 検証
-            
+
+            sql_3 = f"""
+                SELECT hpt.hash = encode(hashvals.hash[1], 'hex') as result
+                    FROM hashvals, hash_parts_tree hpt
+                    WHERE hashvals.partid = hpt.partid AND hpt.partid = %s;
+            """
+            cur.execute(sql_3, (root_partid, ))
+            row = cur.fetchone()
+
+            if row[0] == 't' : return True # 出力がない = 検証成功
+
+
+            ## 特定処理続行
             sql_3 = """
                 INSERT INTO path (partid, hash, hash_on)
                 WITH va AS (
@@ -149,12 +161,7 @@ def valification(peer, peers, root_partid):
                 SELECT count(partid) FROM path;
             """
             cur.execute(sql_3)
-            row = cur.fetchone()
 
-            if row[0] == 0 : return True # 出力がない = 検証成功
-
-
-            ## 特定処理続行
             cur.execute("""
                 UPDATE path SET parents_partid = temp.parents_partid
                 FROM temp
@@ -201,6 +208,7 @@ def valification(peer, peers, root_partid):
                     """)
                 
                 # 検証
+
                 cur.execute("""
                     WITH checking AS (
                         SELECT partid, parents_partid, hash = hash_on AS result

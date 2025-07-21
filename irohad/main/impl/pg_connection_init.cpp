@@ -284,13 +284,13 @@ CREATE TABLE partinfo (
 CREATE INDEX index_info ON partinfo (partid);
 
 CREATE TABLE partrelationship (
-    partid CHARACTER varying(288) references partinfo(partid),
+    partid CHARACTER varying(288),
     parents_partid CHARACTER varying(288),
-    priority int,
-    PRIMARY KEY (partid)
+    qty int,
+    UNIQUE (partid, parents_partid)
 );
 
-CREATE INDEX index_relation ON partinfo (partid);
+CREATE INDEX index_relation ON partrelationship (partid);
 
 DROP FUNCTION IF EXISTS xor_sha256;
 
