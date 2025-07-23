@@ -1,6 +1,6 @@
 
 import time
-import calculation as c
+import calculation2 as c
 import write_to_db as w
 import update as u
 import varification as v

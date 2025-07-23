@@ -68,13 +68,13 @@ def get_Assebler(target_part):
 
     sql_statement = sql.SQL(
             """
-            SELECT * FROM partinfo WHERE partid = {target_part};
+            SELECT assembler FROM partinfo WHERE partid = {target_part};
             """
         ).format(
             target_part = sql.Literal(target_part)
         )
         
-    return SQLexe.QUERYexecutor_on(sql_statement, "postgresA")[0][1]
+    return SQLexe.QUERYexecutor_on(sql_statement, "postgresA")[0][0]
 
 
 ### ハッシュ値を取得

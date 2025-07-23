@@ -34,7 +34,7 @@ def hash_part_tree(peer, peers, root_partid):
                 CREATE TEMP TABLE target_tree (
                     partid CHARACTER varying(288),
                     parents_partid CHARACTER varying(288),
-                    qty int,
+                    qty BIGINT,
                     UNIQUE (partid, parents_partid)
                 );
                 
@@ -64,19 +64,20 @@ def hash_part_tree(peer, peers, root_partid):
                 INSERT INTO target_tree (partid, parents_partid, qty) 
                     WITH RECURSIVE get_tree(partid, parents_partid) AS 
                         ( 
-                            SELECT partid, parents_partid, priority as qty
+                            SELECT partid, parents_partid, qty
                             FROM partrelationship
                             WHERE partid = %s
 
                             UNION
 
-                            SELECT r.partid, r.parents_partid, r.priority AS qty
+                            SELECT r.partid, r.parents_partid, r.qty
                             FROM partrelationship r, get_tree gt
                             WHERE r.parents_partid = gt.partid 
                         )
                         SELECT gt.partid, gt.parents_partid, qty
                         FROM get_tree gt;
                 """
+            cur.execute(sql_1, (root_partid, ))
 
             ## cfpの算出
             # offchain-dbからcfpの算出
@@ -119,6 +120,7 @@ def hash_part_tree(peer, peers, root_partid):
                 FROM cfpvals;
 
             """
+            cur.execute(sql_2)
 
             # 単品部品の処理
             sql_3 = f"""
@@ -132,8 +134,8 @@ def hash_part_tree(peer, peers, root_partid):
                         tt.partid, tt.parents_partid,
                         -- ハッシュ化可能か
                         CASE 
-                            WHEN EXISTS ( SELECT 1 FROM target_tree tt WHERE tt.parents_partid = calc_cfp.partid ) THEN 'f'::boolean
-                            ELSE 't'::boolean
+                            WHEN EXISTS ( SELECT 1 FROM target_tree tt WHERE tt.parents_partid = calc_cfp.partid ) THEN False
+                            ELSE True
                         END AS can_hashing,
                         -- 重複チェック
                         duplication,
@@ -141,12 +143,12 @@ def hash_part_tree(peer, peers, root_partid):
                     FROM calc_cfp, target_tree tt, check_duplication cd
                     WHERE calc_cfp.partid = tt.partid AND tt.partid = cd.partid;
             """
-            cur.execute(sql_1 + sql_2 + sql_3, (root_partid, ))
+            cur.execute(sql_3)
 
             while True: 
 
                 # 終了条件
-                cur.execute("SELECT partid FROM hashvals WHERE can_hashing = 'f' LIMIT 1;")
+                cur.execute("SELECT partid FROM hashvals WHERE can_hashing = False LIMIT 1;")
                 row = cur.fetchone()
 
                 if not row:
@@ -159,13 +161,13 @@ def hash_part_tree(peer, peers, root_partid):
                             bool_and(can_hashing)
                         FROM hashvals
                         GROUP BY parents_partid 
-                        HAVING bool_and(can_hashing) = 't'
+                        HAVING bool_and(can_hashing) = True
                     ), 
 
                     check_dup AS (
                         SELECT partid AS partid_org, gch.parents_partid AS partid,
                             CASE duplication 
-                                WHEN 't' THEN digest( hash::text || gch.parents_partid::text, 'sha256')
+                                WHEN True THEN digest( hash::text || gch.parents_partid::text, 'sha256')
                                 ELSE hash
                             END AS hash_under_calc
                         FROM get_can_hashing gch, hashvals h
@@ -180,9 +182,9 @@ def hash_part_tree(peer, peers, root_partid):
                         GROUP BY partid 
                     )
 
-                    UPDATE hashvals SET (can_hashing, hash) = ('t', xor_sha256(hash_list || hash)) 
+                    UPDATE hashvals SET (can_hashing, hash) = (True, xor_sha256(hash_list || hash)) 
                     FROM hashing h
-                    WHERE h.partid = hashvals.partid AND can_hashing = 'f';
+                    WHERE h.partid = hashvals.partid AND can_hashing = False;
                 """ 
                 cur.execute(sql_4)
                 
@@ -276,9 +278,9 @@ if __name__ == '__main__':
     start = time.time()
 
     peers = ["postgresA", "postgresB", "postgresC"]
-    result = hash_part_tree(assembler, peers, root_partid)
-    print(result)
-    #make_merkltree(assembler, root_partid)
+    #result = hash_part_tree(assembler, peers, root_partid)
+    #print(result)
+    make_merkltree(assembler, root_partid)
     
     t = time.time() - start
     print("time:", t)

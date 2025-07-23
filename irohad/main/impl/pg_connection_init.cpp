@@ -286,7 +286,7 @@ CREATE INDEX index_info ON partinfo (partid);
 CREATE TABLE partrelationship (
     partid CHARACTER varying(288),
     parents_partid CHARACTER varying(288),
-    qty int,
+    qty bigint,
     UNIQUE (partid, parents_partid)
 );
 
