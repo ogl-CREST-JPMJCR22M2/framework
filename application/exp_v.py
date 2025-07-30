@@ -11,13 +11,13 @@ from psycopg2.extras import execute_values
 
 import SQLexecutor as SQLexe
 import write_to_db as w
-import varification as v
-import calculation as c
+import varification2 as v
+import calculation2 as c
 
 # Set seed for reproducibility
 np.random.seed(42)
 
-num_total_parts = 30000
+num_total_parts = 253
 num_transactions = 1000
 kaizan_percent = [1.0, 5.0, 10.0, 15.0, 20.0] # %で
 percent = kaizan_percent[0]
@@ -91,56 +91,10 @@ print("time:", t)
 #rset = set(rlist)
 #print("Specific num:", len(result))
 #print("Kaizan num:", len(per))
+
+print(result)
+print(per)
 print("Specific rate:", len(result)/len(per)*100)
 #print(set(result)-set(per))
 #print(set(result))
 #print(set(per))
-
-
-"""
-# ===== 更新対象部品を選ぶ =======
-parts = [f"P{i}" for i in range(num_total_parts)]
-sampled_parts = random.sample(parts, num_total_parts)
-
-# Pareto distribution: skewed access to partitions
-alpha = 1.5
-raw_pareto = np.random.pareto(alpha, num_transactions)
-pareto_transactions = np.floor(num_total_parts * raw_pareto / (raw_pareto.max() + 1e-8)).astype(int)
-
-# ===== インデックスから部品IDに変換 =====
-mapped_parts_p = [sampled_parts[i] for i in pareto_transactions]
-
-# ===== トランザクション実行関数 =====
-def exec_transaction(target_part):
-
-    assembler = w.get_Assebler(target_part)
-    result = v.valification(assembler, peers, target_part)
-    return result
-
-# ===== 実行 ====
-
-#rlist = []
-
-total_start = time.time()
-
-with ThreadPoolExecutor(max_workers=10) as executor:
-    r = executor.map(exec_transaction, mapped_parts_p)
-
-total_elapsed = time.time() - total_start
-
-print("total time: ", total_elapsed)
-print("average time:", total_elapsed / num_transactions)
-
-#エラー回避のためのlist->tuple
-rlist = list(r)
-rlist_ = []
-
-for i in rlist:
-    if len(i) != 0:
-        rlist_.append(i[0])
-
-rset = set(rlist_)
-print("Specific num:", len(rset))
-print("Kaizan num:", len(per))
-print("Specific rate:", len(rset)/len(per)*100)
-"""

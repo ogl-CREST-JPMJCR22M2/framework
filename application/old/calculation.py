@@ -1,183 +1,221 @@
 ### partidを使って求める
 
-from sqlalchemy import create_engine, text
-import polars as pl
 import time
 import hashlib
 from decimal import *
-import zlib
+from typing import Optional
+from psycopg2 import connect, sql
+from psycopg2.extras import execute_values
+from psycopg2._psycopg import connection, cursor
+from collections import defaultdict
 
 import SQLexecutor as SQLexe
 import write_to_db as w
 
 
-# ======== DataFrameの表示の仕方 ======== #
-pl.Config.set_tbl_cols(-1)
-pl.Config.set_tbl_rows(-1)
-pl.Config.set_fmt_str_lengths(n=30)
-# ===================================== #
+def hash_part_tree(peer, peers, root_partid):
 
+    conn: Optional[connection] = None
+    try:
+        dsn = {
+            "dbname": "iroha_default",
+            "user": "postgres",
+            "password": "mysecretpassword",
+            "port": "5432",
+            "host": peer
+        }
+        conn = connect(**dsn)
+        conn.autocommit = True
 
-# ======== 部品木の取得 ======== #
+        with conn.cursor() as cur:
 
-def get_part_tree(peer, peers, root_partid):
+            
 
-    engine = create_engine("postgresql://postgres:mysecretpassword@"+peer+":5432/iroha_default")
+            ## 一時テーブルの構築
+            cur.execute("""
+                CREATE TEMP TABLE temp (
+                    partid CHARACTER varying(288),
+                    parents_partid CHARACTER varying(288),
+                    assembler CHARACTER varying(288),
+                    cfp DECIMAL, 
+                    co2 DECIMAL,
+                    PRIMARY KEY (partid)
+                );
 
-     # offchain-dbからcfpの算出
-    sql_import = " UNION ALL ".join( 
-            ["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, co2 FROM cfpval') AS t1(partid CHARACTER varying(288), co2 DECIMAL)"
-            for p in peers ])
+                CREATE TEMP TABLE hashvals(
+                    partid CHARACTER varying(288),
+                    can_hashing boolean,
+                    hash bytea[],
+                    PRIMARY KEY (partid)
+                );
 
-    sql_ =  "WITH plain_cfp AS (" + sql_import + "),"
+                CREATE INDEX idx_temp ON temp(partid);
+                CREATE INDEX idx_hash ON hashvals(partid);
+            """)
+            
+            ## cfpの算出
+            # offchain-dbからcfpの算出
+            co2_import = " UNION ALL \n".join(["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, co2 FROM cfpval') AS t1(partid CHARACTER varying(288), co2 DECIMAL)" 
+            for p in peers ]) 
+        
+            sql_ = f"""
+                INSERT INTO temp (partid, parents_partid,  assembler, cfp, co2) 
+                WITH cfpval AS (
+                    {co2_import}
+                ),
+                part_tree AS( 
+                    WITH RECURSIVE calc(partid, parents_partid) AS 
+                        ( 
+                            SELECT partid, parents_partid
+                            FROM partrelationship r
+                            WHERE partid = %s
 
-    # 部品木の抽出
-    sql_ =  sql_ + """
-            part_tree AS( 
-                WITH RECURSIVE calc(partid, parents_partid, priority) AS 
-                    ( 
-                        SELECT partid, parents_partid, priority
-                        FROM partrelationship r
-                        WHERE partid =  """ + "'"+ root_partid + "'"+ """
+                            UNION ALL 
 
-                        UNION ALL 
+                            SELECT r.partid, r.parents_partid
+                            FROM partrelationship r, calc 
+                            WHERE r.parents_partid = calc.partid 
+                        ) 
+                        SELECT calc.partid, parents_partid,  co2 
+                        FROM  calc, cfpval
+                        WHERE calc.partid = cfpval.partid
+                ), 
+                getcfp AS (
+                    WITH RECURSIVE subtree_sum(root_id, current_id, co2) AS 
+                        ( 
+                            SELECT 
+                            partid AS root_id, partid AS current_id, co2
+                            FROM part_tree
 
-                        SELECT r.partid, r.parents_partid, r.priority
-                        FROM partrelationship r, calc 
-                        WHERE r.parents_partid = calc.partid 
-                    ) 
-                    SELECT calc.partid, parents_partid, priority, co2 
-                    FROM  calc, plain_cfp
-                    WHERE calc.partid = plain_cfp.partid
-                ), """
+                            UNION ALL 
 
-    # totalcfpの算出        
-    sql_ =  sql_ + """
-        get_totalcfp AS (
-            WITH RECURSIVE subtree_sum(root_id, current_id, co2) AS 
-                ( 
-                    SELECT 
-                    partid AS root_id, partid AS current_id, co2
-                    FROM part_tree
+                            SELECT ss.root_id, pt.partid AS current_id, pt.co2
+                            FROM subtree_sum ss, part_tree pt
+                            WHERE pt.parents_partid = ss.current_id
+                        ) 
+                        SELECT 
+                        root_id AS partid, SUM(co2) AS cfp
+                        FROM subtree_sum
+                        GROUP BY root_id
+                )
+                SELECT pt.partid, parents_partid, assembler, cfp, co2
+                FROM part_tree pt, getcfp gt, partinfo i
+                WHERE pt.partid = gt.partid AND pt.partid = i.partid;
+            """
+            cur.execute(sql_, (root_partid, ))
 
-                    UNION ALL 
+            sql_1 = """
+                INSERT INTO hashvals (partid, can_hashing, hash)
+                SELECT partid, 'f', ARRAY[digest(cfp::text, 'sha256')]
+                FROM temp;
 
-                    SELECT ss.root_id, pt.partid AS current_id, pt.co2
-                    FROM subtree_sum ss, part_tree pt
-                    WHERE pt.parents_partid = ss.current_id 
-                ) 
-                SELECT 
-                root_id AS partid, SUM(co2) AS cfp
-                FROM subtree_sum
-                GROUP BY root_id
-        )
-        SELECT pt.partid, parents_partid, priority, assembler, cfp, co2
-        FROM part_tree pt, get_totalcfp gt, partinfo i
-        WHERE pt.partid = gt.partid AND pt.partid = i.partid;
-        """
-   
+                UPDATE hashvals SET can_hashing = 't'
+                    WHERE partid  NOT IN (SELECT r.parents_partid FROM partrelationship r, temp WHERE r.parents_partid = temp.partid);
+            """
+            cur.execute(sql_1)
 
-    df = pl.read_database(text(sql_), engine)
+            while True: 
 
-    return df
+                # 終了条件
+                cur.execute("SELECT partid FROM hashvals WHERE can_hashing = 'f' LIMIT 1;")
+                row = cur.fetchone()
 
-# ======== 算出部分 ======== #
+                if not row:
+                    break
 
-# ハッシュ化    
-def sha256(value: float) -> str:
-    return hashlib.sha256(str(value).encode()).hexdigest()
-  
-def crc32(value: float) -> str:
-    return format(zlib.crc32(str(value).encode()) & 0xFFFFFFFF, '08x')
+                sql_2 = """
+                    WITH get_can_hashing_part AS (
+                        SELECT parents_partid as partid, bool_and(can_hashing) as result, array_agg(hash[1]) AS hash_list
+                        FROM hashvals, temp
+                        WHERE temp.partid = hashvals.partid
+                        Group by parents_partid
+                    ),
+                    update_hash AS (
+                        SELECT r1.partid, array_cat(hash, hash_list) AS new_hash
+                        FROM get_can_hashing_part r1, hashvals
+                        WHERE r1.partid = hashvals.partid AND result = 't' AND can_hashing = 'f'
+                    )
+                    UPDATE hashvals SET (can_hashing, hash) = ('t', ARRAY[xor_sha256(new_hash)]) 
+                    FROM update_hash r2
+                    WHERE r2.partid = hashvals.partid;
+                """ 
+                cur.execute(sql_2)
+                
+            sql_5 = "SELECT temp.partid, assembler, cfp, encode(hash[1], 'hex') as hashval FROM temp, hashvals WHERE temp.partid = hashvals.partid;"
+            cur.execute(sql_5)
+            data = cur.fetchall()
 
-# Decimal
-def to_dechimal(value: float) -> Decimal:
-    return Decimal(value).quantize(Decimal('0.0001'), ROUND_HALF_UP)
-
-# ハッシュ値を計算する関数
-def compute_parent_hashes(df):
-
-    # 末端ノードのハッシュ値を決定
-    df = df.with_columns(
-        pl.when(~pl.col("partid").is_in(df["parents_partid"]))
-        .then(pl.col("co2").map_elements(sha256, return_dtype=pl.String))
-        .otherwise(None)
-        .alias("hash")
-    )
-
-    # 子ノードリストを作成
-    child_list = df.select(["partid", "parents_partid"]).group_by("parents_partid").agg(pl.col("partid").alias("child_parts")).rename({"parents_partid": "partid"})
+    finally:
+        if conn:
+            conn.close()
     
-    df = df.join(child_list, on="partid", how="left")
-        
-        
-    # 子部品のハッシュの連結
-    def get_child_hashes(parts: list[str]) -> str:
-
-        df_ =  df.filter(pl.col("partid").is_in(parts))
-        df_ = df_.sort(["priority"])
-
-        hash_values = df_["hash"].to_list()
-
-        clean_hashes = []
-
-        for h in hash_values:
-            if h is None:
-                return None
-            else:
-                clean_hashes.append(h)
-        
-        out = "".join(clean_hashes)
-        
-        return out
-
-    # ハッシュ値を計算
-    while df["hash"].null_count() > 0:
-
-        df = df.with_columns(
-            pl.when((pl.col("hash").is_null()) & (pl.col("child_parts").is_not_null()))
-            .then(
-                pl.concat_str([
-                    pl.col("co2").map_elements(sha256, return_dtype=pl.String),
-                    pl.col("child_parts").map_elements(get_child_hashes, return_dtype=pl.String)
-                    ])
-                    .map_elements(crc32, return_dtype=pl.String)
-            )
-            .otherwise(pl.col("hash"))
-            .alias("hash")
-        )
-
-    return df
+    return data
 
 
-
-def make_merkltree(assembler, root_partid, write_totalcfp = False):
+def make_merkltree(assembler, root_partid):
 
     peers = ["postgresA", "postgresB", "postgresC"]
 
-    df = get_part_tree(assembler, peers, root_partid) # root_partidがルートの部品木の抽出 
+    start = time.time()
+    ## postgres処理
+    result = hash_part_tree(assembler, peers, root_partid)
 
-    result = compute_parent_hashes(df) # マークル木を計算
+    #print("ツリー構築",time.time()-start)
+    start = time.time()
+
+    # polarsに変換
+    part_list = []
+    hash_list = []
+
+    # assemblerごとの2次元リスト (insert_val)
+    insert_val_dict = defaultdict(list)
+
+    for partid, assembler, cfp, hashval in result:
+        part_list.append(partid)
+        hash_list.append(hashval)
+        insert_val_dict[assembler].append((partid, cfp))
+
+    # assemblerの辞書のkey
+    assembler_unique = list(insert_val_dict.keys())
+
+    #print("データの抽出",time.time()-start)
+    start = time.time()
 
     # Irohaコマンドで書き込み
-    part_list, hash_list = w.to_iroha(result)
-
     SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
-    
-    # 各offchainに書き込み
-    if write_totalcfp == True:
 
-        result_a = result['partid', 'assembler', 'cfp'] #必要な列だけ抽出
+    #print("iroha実行",time.time()-start)
+    start = time.time()
 
-        assembler_list = result_a.unique(subset=['assembler'])['assembler'].to_list()
+    # offchain-dbへの書き込み
+    for key in assembler_unique:
 
-        for a in assembler_list:
+        upsert_sql = """
+            UPDATE cfpval AS t
+            SET
+                partid = v.partid,
+                cfp = v.cfp
+            FROM (VALUES %s)
+            AS v(partid, cfp)
+            WHERE v.partid = t.partid;
+        """
 
-            df_a = result_a.filter(pl.col("assembler") == a)
-            w.upsert_totalcfp_exe(df_a, a)
-        
-    return result
+        # DB接続
+        conn = connect(
+            dbname = "offchaindb", 
+            user = "postgres", 
+            password = "mysecretpassword",
+            host = key,
+            port = 5432
+        )
 
+        with conn.cursor() as cur:
+            execute_values(cur, upsert_sql, insert_val_dict[key])
+
+        conn.commit()
+        conn.close()
+
+    #print("offchainへwrite",time.time()-start)
 
 
 # ======== MAIN ======== #
@@ -189,9 +227,7 @@ if __name__ == '__main__':
 
     start = time.time()
 
-    df = make_merkltree(assembler, root_partid, True)
+    make_merkltree(assembler, root_partid)
     
     t = time.time() - start
     print("time:", t)
-
-

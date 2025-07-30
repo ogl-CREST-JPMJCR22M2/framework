@@ -29,120 +29,170 @@ def hash_part_tree(peer, peers, root_partid):
 
         with conn.cursor() as cur:
 
-            
-
             ## 一時テーブルの構築
             cur.execute("""
-                CREATE TEMP TABLE temp (
+                CREATE TEMP TABLE target_tree (
                     partid CHARACTER varying(288),
                     parents_partid CHARACTER varying(288),
-                    assembler CHARACTER varying(288),
+                    qty NUMERIC(100,0),
+                    UNIQUE (partid, parents_partid)
+                );
+                
+                CREATE TEMP TABLE calc_cfp (
+                    partid CHARACTER varying(288),
                     cfp DECIMAL, 
-                    co2 DECIMAL,
+                    hash_cfp bytea,
                     PRIMARY KEY (partid)
                 );
 
                 CREATE TEMP TABLE hashvals(
                     partid CHARACTER varying(288),
+                    parents_partid CHARACTER varying(288),
                     can_hashing boolean,
-                    hash bytea[],
-                    PRIMARY KEY (partid)
+                    duplication boolean,
+                    hash bytea,
+                    UNIQUE (partid, parents_partid)
                 );
 
-                CREATE INDEX idx_temp ON temp(partid);
+                CREATE INDEX idx_tree ON target_tree(partid);
+                CREATE INDEX idx_cfp ON calc_cfp(partid);
                 CREATE INDEX idx_hash ON hashvals(partid);
             """)
             
+            # 部品木の抽出
+            sql_1 = f"""
+                INSERT INTO target_tree (partid, parents_partid, qty) 
+                    WITH RECURSIVE get_tree(partid, parents_partid) AS 
+                        ( 
+                            SELECT partid, parents_partid, qty
+                            FROM partrelationship
+                            WHERE partid = %s
+
+                            UNION
+
+                            SELECT r.partid, r.parents_partid, r.qty
+                            FROM partrelationship r, get_tree gt
+                            WHERE r.parents_partid = gt.partid 
+                        )
+                        SELECT gt.partid, gt.parents_partid, qty
+                        FROM get_tree gt;
+                """
+            cur.execute(sql_1, (root_partid, ))
+
             ## cfpの算出
             # offchain-dbからcfpの算出
             co2_import = " UNION ALL \n".join(["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, co2 FROM cfpval') AS t1(partid CHARACTER varying(288), co2 DECIMAL)" 
             for p in peers ]) 
         
-            sql_ = f"""
-                INSERT INTO temp (partid, parents_partid,  assembler, cfp, co2) 
-                WITH cfpval AS (
+
+            sql_2 = f"""
+                -- cfp算出
+                INSERT INTO calc_cfp (partid, cfp, hash_cfp) 
+                WITH co2vals AS (
                     {co2_import}
                 ),
-                part_tree AS( 
-                    WITH RECURSIVE calc(partid, parents_partid) AS 
-                        ( 
-                            SELECT partid, parents_partid
-                            FROM partrelationship r
-                            WHERE partid = %s
+                cfpvals AS(               
+                    WITH RECURSIVE calc_qty(partid, root, quantity) AS (
+                        SELECT DISTINCT
+                            tt.partid,
+                            tt.partid AS root,
+                            1:: NUMERIC(100,0) AS quantity
+                        FROM target_tree tt
 
-                            UNION ALL 
+                        UNION ALL
 
-                            SELECT r.partid, r.parents_partid
-                            FROM partrelationship r, calc 
-                            WHERE r.parents_partid = calc.partid 
-                        ) 
-                        SELECT calc.partid, parents_partid,  co2 
-                        FROM  calc, cfpval
-                        WHERE calc.partid = cfpval.partid
-                ), 
-                getcfp AS (
-                    WITH RECURSIVE subtree_sum(root_id, current_id, co2) AS 
-                        ( 
-                            SELECT 
-                            partid AS root_id, partid AS current_id, co2
-                            FROM part_tree
-
-                            UNION ALL 
-
-                            SELECT ss.root_id, pt.partid AS current_id, pt.co2
-                            FROM subtree_sum ss, part_tree pt
-                            WHERE pt.parents_partid = ss.current_id
-                        ) 
-                        SELECT 
-                        root_id AS partid, SUM(co2) AS cfp
-                        FROM subtree_sum
-                        GROUP BY root_id
+                        SELECT
+                            tt.partid,          -- 子部品
+                            cq.root,           -- スタート部品は固定
+                            (cq.quantity * tt.qty):: NUMERIC(100,0) -- 親の個数 * 使用数（qty）
+                        FROM calc_qty cq
+                        JOIN target_tree tt ON tt.parents_partid = cq.partid
+                    )
+                    SELECT
+                        cq.root AS partid,
+                        ROUND(SUM(c.co2 * cq.quantity), 4) AS cfp
+                    FROM calc_qty cq
+                    JOIN co2vals c ON cq.partid = c.partid
+                    GROUP BY cq.root
+                    ORDER BY cq.root
                 )
-                SELECT pt.partid, parents_partid, assembler, cfp, co2
-                FROM part_tree pt, getcfp gt, partinfo i
-                WHERE pt.partid = gt.partid AND pt.partid = i.partid;
+                SELECT partid, cfp, digest(cfp::text, 'sha256') AS hash_cfp
+                FROM cfpvals;
+
             """
-            cur.execute(sql_, (root_partid, ))
+            cur.execute(sql_2)
 
-            sql_1 = """
-                INSERT INTO hashvals (partid, can_hashing, hash)
-                SELECT partid, 'f', ARRAY[digest(cfp::text, 'sha256')]
-                FROM temp;
-
-                UPDATE hashvals SET can_hashing = 't'
-                    WHERE partid  NOT IN (SELECT r.parents_partid FROM partrelationship r, temp WHERE r.parents_partid = temp.partid);
+            # 単品部品の処理
+            sql_3 = f"""
+                INSERT INTO hashvals (partid, parents_partid, can_hashing, duplication, hash)
+                    WITH check_duplication AS (
+                        SELECT partid, COUNT(partid) > 1 AS duplication
+                        FROM target_tree
+                        GROUP BY partid
+                    )
+                    SELECT 
+                        tt.partid, tt.parents_partid,
+                        -- ハッシュ化可能か
+                        CASE 
+                            WHEN EXISTS ( SELECT 1 FROM target_tree tt WHERE tt.parents_partid = calc_cfp.partid ) THEN False
+                            ELSE True
+                        END AS can_hashing,
+                        -- 重複チェック
+                        duplication,
+                        hash_cfp AS hash
+                    FROM calc_cfp, target_tree tt, check_duplication cd
+                    WHERE calc_cfp.partid = tt.partid AND tt.partid = cd.partid;
             """
-            cur.execute(sql_1)
-
+            cur.execute(sql_3)
+            
             while True: 
 
                 # 終了条件
-                cur.execute("SELECT partid FROM hashvals WHERE can_hashing = 'f' LIMIT 1;")
+                cur.execute("SELECT partid FROM hashvals WHERE can_hashing = False LIMIT 1;")
                 row = cur.fetchone()
 
                 if not row:
                     break
 
-                sql_2 = """
-                    WITH get_can_hashing_part AS (
-                        SELECT parents_partid as partid, bool_and(can_hashing) as result, array_agg(hash[1]) AS hash_list
-                        FROM hashvals, temp
-                        WHERE temp.partid = hashvals.partid
-                        Group by parents_partid
+                sql_4 = """
+                    WITH get_can_hashing AS (
+                        SELECT 
+                            parents_partid, 
+                            bool_and(can_hashing)
+                        FROM hashvals
+                        GROUP BY parents_partid 
+                        HAVING bool_and(can_hashing) = True
+                    ), 
+
+                    check_dup AS (
+                        SELECT partid AS partid_org, gch.parents_partid AS partid,
+                            CASE duplication 
+                                WHEN True THEN digest( hash::text || gch.parents_partid::text, 'sha256')
+                                ELSE hash
+                            END AS hash_under_calc
+                        FROM get_can_hashing gch, hashvals h
+                        WHERE gch.parents_partid = h.parents_partid
                     ),
-                    update_hash AS (
-                        SELECT r1.partid, array_cat(hash, hash_list) AS new_hash
-                        FROM get_can_hashing_part r1, hashvals
-                        WHERE r1.partid = hashvals.partid AND result = 't' AND can_hashing = 'f'
+
+                    hashing AS (
+                        SELECT 
+                            partid,
+                            array_agg(hash_under_calc) AS hash_list
+                        FROM check_dup
+                        GROUP BY partid 
                     )
-                    UPDATE hashvals SET (can_hashing, hash) = ('t', ARRAY[xor_sha256(new_hash)]) 
-                    FROM update_hash r2
-                    WHERE r2.partid = hashvals.partid;
+
+                    UPDATE hashvals SET (can_hashing, hash) = (True, xor_sha256(hash_list || hash)) 
+                    FROM hashing h
+                    WHERE h.partid = hashvals.partid AND can_hashing = False;
                 """ 
-                cur.execute(sql_2)
+                cur.execute(sql_4)
                 
-            sql_5 = "SELECT temp.partid, assembler, cfp, encode(hash[1], 'hex') as hashval FROM temp, hashvals WHERE temp.partid = hashvals.partid;"
-            cur.execute(sql_5)
+            cur.execute( """
+                SELECT DISTINCT calc_cfp.partid, assembler, cfp, encode(hash, 'hex') AS hashval 
+                FROM calc_cfp, hashvals, partinfo pi 
+                WHERE calc_cfp.partid = hashvals.partid AND calc_cfp.partid = pi.partid;
+                """)
             data = cur.fetchall()
 
     finally:
@@ -162,7 +212,7 @@ def make_merkltree(assembler, root_partid):
 
     #print("ツリー構築",time.time()-start)
     start = time.time()
-
+    
     # polarsに変換
     part_list = []
     hash_list = []
@@ -182,7 +232,7 @@ def make_merkltree(assembler, root_partid):
     start = time.time()
 
     # Irohaコマンドで書き込み
-    #SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
+    SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
 
     #print("iroha実行",time.time()-start)
     start = time.time()
@@ -227,6 +277,9 @@ if __name__ == '__main__':
 
     start = time.time()
 
+    peers = ["postgresA", "postgresB", "postgresC"]
+    #result = hash_part_tree(assembler, peers, root_partid)
+    #print(result)
     make_merkltree(assembler, root_partid)
     
     t = time.time() - start
