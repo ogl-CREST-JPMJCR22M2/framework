@@ -278,9 +278,9 @@ if __name__ == '__main__':
     start = time.time()
 
     peers = ["postgresA", "postgresB", "postgresC"]
-    #result = hash_part_tree(assembler, peers, root_partid)
+    result = hash_part_tree(assembler, peers, root_partid)
     #print(result)
-    make_merkltree(assembler, root_partid)
+    #make_merkltree(assembler, root_partid)
     
     t = time.time() - start
     print("time:", t)

@@ -11,27 +11,42 @@ from psycopg2.extras import execute_values
 
 import SQLexecutor as SQLexe
 import write_to_db as w
-import varification2 as v
-import calculation2 as c
+import varification as v
+import calculation as c
 
 # Set seed for reproducibility
 np.random.seed(42)
 
-num_total_parts = 253
+num_total_parts = 30000
 num_transactions = 1000
-kaizan_percent = [1.0, 5.0, 10.0, 15.0, 20.0] # %で
-percent = kaizan_percent[0]
+kaizan_percent = [1.0, 5.0, 10.0, 15.0] # %で
+percent = kaizan_percent[3]
 
-#init
+#init calculation
 root_partid = 'P0'
 peers = ["postgresA", "postgresB", "postgresC"]
 assembler = w.get_Assebler(root_partid)
+
+start = time.time()
 c.make_merkltree(assembler, root_partid)
+t = time.time() - start
+
+print("Calculation time:", t)
+
+#"""
+start = time.time()
+result = v.valification(assembler, peers, root_partid)
+t = time.time() - start
+print("Varification time (Successflly):", t)
+#"""
 
 # kaizan part select 
 parts = [f"P{i}" for i in range(num_total_parts)]
 
-per = random.sample(parts, int(num_total_parts * percent * 0.01))
+kaizantaisho = num_total_parts * percent * 0.01
+if kaizantaisho < 1.0 : kaizantaisho = 1.0
+
+per = random.sample(parts, int(kaizantaisho))
 
 df_va = pl.DataFrame({
     "partid":per,
@@ -85,16 +100,9 @@ kaizan("postgresC", Clist)
 start = time.time()
 result = v.valification(assembler, peers, root_partid)
 t = time.time() - start
+print("Varification time:", t)
 
-print("time:", t)
-
-#rset = set(rlist)
-#print("Specific num:", len(result))
-#print("Kaizan num:", len(per))
-
-print(result)
-print(per)
+#print(result)
+#print(per)
 print("Specific rate:", len(result)/len(per)*100)
-#print(set(result)-set(per))
-#print(set(result))
-#print(set(per))
+
