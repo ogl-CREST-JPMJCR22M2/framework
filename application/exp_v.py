@@ -17,9 +17,10 @@ import calculation as c
 # Set seed for reproducibility
 np.random.seed(42)
 
-num_total_parts = 30000
+num_total_parts = 30
 num_transactions = 1000
-kaizan_percent = [1.0, 5.0, 10.0, 15.0] # %で
+#kaizan_percent = [1.0, 5.0, 10.0, 15.0] # %で
+kaizan_percent = [1.0, 3.0, 5.0, 10.0]
 percent = kaizan_percent[3]
 
 #init calculation

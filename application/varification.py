@@ -184,21 +184,22 @@ def valification(peer, peers, root_partid):
                     child_partid CHARACTER varying(288),
                     partid CHARACTER varying(288),
                     duplication boolean,
-                    hash_c bytea,
                     hash bytea,
+                    hash_c bytea,
+                    hash_on bytea,
                     UNIQUE (partid, child_partid)
                 );
 
-                CREATE INDEX idx_potential_kaizan ON potential_kaizan(partid);
-                CREATE INDEX child_idx_potential_kaizan ON potential_kaizan(child_partid);
+                CREATE INDEX IF NOT EXISTS i_potkz_partid_child ON potential_kaizan(partid, child_partid);
 
-                INSERT INTO potential_kaizan (partid, child_partid, duplication, hash, hash_c)
+                INSERT INTO potential_kaizan (partid, child_partid, duplication, hash, hash_c, hash_on)
                     SELECT DISTINCT
                         h.parents_partid,
                         h.partid, 
                         h.duplication,
-                        hp.hash,
-                        h.hash
+                        hp.hash AS hash,
+                        h.hash AS hash_c,
+                         decode(hpt.hash, 'hex') AS hash_on
                     FROM hashvals h
                     JOIN hash_parts_tree hpt ON h.partid = hpt.partid
                     LEFT JOIN hashvals hp ON h.parents_partid = hp.partid
@@ -209,87 +210,146 @@ def valification(peer, peers, root_partid):
             target = cur.fetchall()
 
             kaizan_kamo = set()
+
+            cur.execute("SELECT 1 FROM potential_kaizan WHERE duplication = True;")
+            duplication = cur.fetchall()
+
+            if len(duplication) >0 :
             
-            while True:
-                ## 検証失敗のため特定処理へ
-                # 初期値点ごとで繰り返し
-                for n in target:
+                while True:
+                    ## 検証失敗のため特定処理へ
+                    # 初期値点ごとで繰り返し
+                    for n in target:
 
-                    now_searching = n[0]
-                    kaizan_kamo.add(now_searching)
+                        now_searching = n[0]
+                        kaizan_kamo.add(now_searching)
 
-                    cur.execute(f"""
-                        WITH do_xor AS (
-                            WITH RECURSIVE do_xor_(partid, child_partid, done_xor_hash) AS (
-                                SELECT partid, child_partid,
-                                    CASE duplication
-                                        WHEN True THEN xor_sha256(ARRAY[
-                                                p.hash, 
-                                                digest( p.hash_c::text || p.partid::text, 'sha256'),
+                        cur.execute(f"""
+                            WITH do_xor AS (
+                                WITH RECURSIVE do_xor_(partid, child_partid, done_xor_hash) AS (
+                                    SELECT partid, child_partid,
+                                        CASE duplication
+                                            WHEN True THEN xor_sha256(ARRAY[
+                                                    p.hash, 
+                                                    digest( p.hash_c::text || p.partid::text, 'sha256'),
+                                                    (SELECT decode(hash, 'hex') FROM hash_parts_tree WHERE partid = '{now_searching}')
+                                                ])
+                                            ELSE xor_sha256(ARRAY[p.hash, p.hash_c, 
                                                 (SELECT decode(hash, 'hex') FROM hash_parts_tree WHERE partid = '{now_searching}')
-                                            ])
-                                        ELSE xor_sha256(ARRAY[p.hash, p.hash_c, 
-                                            (SELECT decode(hash, 'hex') FROM hash_parts_tree WHERE partid = '{now_searching}')
-                                        ]) 
+                                            ]) 
+                                        END AS done_xor_hash,
+                                        p.hash
+                                    FROM potential_kaizan p
+                                    WHERE child_partid = '{now_searching}'
+
+                                    UNION
+
+                                    SELECT p.partid, p.child_partid, 
+                                        CASE duplication
+                                            WHEN True THEN xor_sha256(ARRAY[
+                                                    p.hash, 
+                                                    digest( p.hash_c::text || p.partid::text, 'sha256'),
+                                                    digest( x.done_xor_hash::text || p.partid::text, 'sha256')
+                                                ])
+                                            ELSE xor_sha256(ARRAY[ p.hash, hash_c, x.done_xor_hash ])
                                     END AS done_xor_hash,
                                     p.hash
-                                FROM potential_kaizan p
-                                WHERE child_partid = '{now_searching}'
-
-                                UNION
-
-                                SELECT p.partid, p.child_partid, 
-                                    CASE duplication
-                                        WHEN True THEN xor_sha256(ARRAY[
-                                                p.hash, 
-                                                digest( p.hash_c::text || p.partid::text, 'sha256'),
-                                                digest( x.done_xor_hash::text || p.partid::text, 'sha256')
-                                            ])
-                                        ELSE xor_sha256(ARRAY[ p.hash, hash_c, x.done_xor_hash ])
-                                END AS done_xor_hash,
-                                p.hash
-                                FROM potential_kaizan p, do_xor_ x
-                                WHERE p.child_partid = x.partid
+                                    FROM potential_kaizan p, do_xor_ x
+                                    WHERE p.child_partid = x.partid
+                                )
+                                SELECT * FROM do_xor_
+                            ), 
+                            do_synchro AS (
+                                SELECT partid,
+                                    CASE 
+                                        WHEN count(partid) > 1 THEN xor_sha256(array_agg(done_xor_hash) || any_value(hash) )
+                                        ELSE any_value(done_xor_hash)
+                                    END AS done_synchro
+                                FROM do_xor
+                                GROUP BY partid
                             )
-                            SELECT * FROM do_xor_
-                        ), 
-                        do_synchro AS (
-                            SELECT partid,
-                                CASE 
-                                    WHEN count(partid) > 1 THEN xor_sha256(array_agg(done_xor_hash) || any_value(hash) )
-                                    ELSE any_value(done_xor_hash)
-                                END AS done_synchro
-                            FROM do_xor
-                            GROUP BY partid
-                        )
-                        UPDATE potential_kaizan p
-                            SET (hash, hash_c) = (d.hash, d.hash_c )
-                        FROM (
-                            SELECT p.partid, p.child_partid,
-                            ds1.done_synchro AS hash,
-                            ds2.done_synchro AS hash_c
-                            FROM potential_kaizan p
-                            LEFT JOIN do_synchro ds1 ON ds1.partid = p.partid
-                            LEFT JOIN do_synchro ds2 ON ds2.partid = p.child_partid
-                        ) AS d
-                        WHERE p.partid = d.partid AND p.child_partid = d.child_partid;
-                    """)
-                
-                # 検証
+                            UPDATE potential_kaizan p
+                                SET (hash, hash_c) = (d.hash, d.hash_c )
+                            FROM (
+                                SELECT p.partid, p.child_partid,
+                                ds1.done_synchro AS hash,
+                                ds2.done_synchro AS hash_c
+                                FROM potential_kaizan p
+                                LEFT JOIN do_synchro ds1 ON ds1.partid = p.partid
+                                LEFT JOIN do_synchro ds2 ON ds2.partid = p.child_partid
+                            ) AS d
+                            WHERE p.partid = d.partid AND p.child_partid = d.child_partid;
+                        """)
+                    
+                    # 検証
 
-                cur.execute("""
-                    WITH false_list AS (
-                        SELECT p.partid, child_partid, p.hash
-                        FROM potential_kaizan p, hash_parts_tree hpt
-                        WHERE hpt.hash <> encode(p.hash, 'hex') AND hpt.partid = p.partid
-                    )
-                    SELECT partid 
+                    cur.execute("""
+                        WITH false_list AS (
+                            SELECT p.partid, child_partid, p.hash
+                            FROM potential_kaizan p, hash_parts_tree hpt
+                            WHERE hpt.hash <> encode(p.hash, 'hex') AND hpt.partid = p.partid
+                        )
+                        SELECT partid 
+                            FROM false_list 
+                            WHERE partid IN (SELECT child_partid FROM false_list);
+                    """)
+                    target = cur.fetchall()  
+
+                    if len(target) == 0 : break # 出力がない = 検証終了
+
+            else:
+
+                while True:
+                    ## 検証失敗のため特定処理へ
+                    # 初期値点ごとで繰り返し
+                    for n in target:
+
+                        now_searching = n[0]
+                        kaizan_kamo.add(now_searching)
+
+                        cur.execute(f"""
+                            WITH target_hash AS (
+                                SELECT 
+                                xor_sha256(ARRAY[ hash_c, hash_on])AS xor_hash 
+                                FROM potential_kaizan p
+                                WHERE p.child_partid = '{now_searching}'
+                            ),
+                            do_xor AS (
+                                WITH RECURSIVE do_xor(partid, child_partid) AS (
+                                    SELECT partid, child_partid, 
+                                        xor_sha256(ARRAY[hash, xor_hash]) AS done_xor_hash
+                                    FROM potential_kaizan, target_hash
+                                    WHERE child_partid = '{now_searching}'
+
+                                    UNION
+
+                                    SELECT p.partid, p.child_partid, 
+                                        xor_sha256(ARRAY[hash, xor_hash]) AS done_xor_hash
+                                    FROM potential_kaizan p, target_hash, do_xor
+                                    WHERE p.child_partid = do_xor.partid
+                                )
+                                SELECT partid, done_xor_hash
+                                FROM do_xor
+                            )
+                            UPDATE potential_kaizan SET hash = done_xor_hash
+                            FROM do_xor dx
+                            WHERE dx.partid = potential_kaizan.partid;
+                        """)
+                    
+                    # 検証
+                    cur.execute("""
+                        WITH false_list AS (
+                            SELECT partid, child_partid
+                            FROM potential_kaizan
+                            WHERE hash_on <> hash
+                        )
+                        SELECT partid 
                         FROM false_list 
                         WHERE partid IN (SELECT child_partid FROM false_list);
-                """)
-                target = cur.fetchall()  
+                    """)
+                    target = cur.fetchall()  
 
-                if len(target) == 0 : break # 出力がない = 検証終了
+                    if len(target) == 0 : break # 出力がない = 検証終了
 
     finally:
         if conn:
@@ -314,6 +374,7 @@ if __name__ == '__main__':
         print("varification successfully")
     else:
         print(result)
+        print("varification faild")
     
     t = time.time() - start
     print("time:", t)

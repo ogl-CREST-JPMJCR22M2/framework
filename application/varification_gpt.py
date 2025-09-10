@@ -5,15 +5,36 @@ import hashlib
 from decimal import *
 from typing import Optional
 from psycopg2 import connect, sql
-from psycopg2.extras import execute_values
 from psycopg2._psycopg import connection, cursor
-from collections import defaultdict
+from psycopg2.extras import execute_values
 
 import SQLexecutor as SQLexe
 import write_to_db as w
 
+from collections import defaultdict, deque
+from psycopg2.extras import RealDictCursor
 
-def hash_part_tree(peer, peers, root_partid):
+# XORユーティリティ
+def xor_bytes(*args: bytes) -> bytes:
+    result = bytearray(32)
+    print(result)
+    for b in args:
+        print(b)
+        for i in range(32):
+            print(result[i],"|", b[i])
+            result[i] ^= b[i]
+    return bytes(result)
+
+def xor_sha256_list(lst):
+    if not lst:
+        return bytes(32)
+    res = lst[0]
+    for b in lst[1:]:
+        res = xor_bytes(res, b)
+    return res
+
+
+def valification(peer, peers, root_partid):
 
     conn: Optional[connection] = None
     try:
@@ -26,6 +47,7 @@ def hash_part_tree(peer, peers, root_partid):
         }
         conn = connect(**dsn)
         conn.autocommit = True
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
         with conn.cursor() as cur:
 
@@ -34,7 +56,7 @@ def hash_part_tree(peer, peers, root_partid):
                 CREATE TEMP TABLE target_tree (
                     partid CHARACTER varying(288),
                     parents_partid CHARACTER varying(288),
-                    qty NUMERIC(100,0),
+                    qty int,
                     UNIQUE (partid, parents_partid)
                 );
                 
@@ -57,6 +79,7 @@ def hash_part_tree(peer, peers, root_partid):
                 CREATE INDEX idx_tree ON target_tree(partid);
                 CREATE INDEX idx_cfp ON calc_cfp(partid);
                 CREATE INDEX idx_hash ON hashvals(partid);
+                CREATE INDEX idx_hash_val ON hashvals(hash);
             """)
             
             # 部品木の抽出
@@ -81,43 +104,19 @@ def hash_part_tree(peer, peers, root_partid):
 
             ## cfpの算出
             # offchain-dbからcfpの算出
-            co2_import = " UNION ALL \n".join(["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, co2 FROM cfpval') AS t1(partid CHARACTER varying(288), co2 DECIMAL)" 
+            co2_import = " UNION ALL \n".join(["SELECT * FROM dblink('host="+ p +" port=5432 dbname=offchaindb user=postgres password=mysecretpassword', 'SELECT partid, cfp FROM cfpval') AS t1(partid CHARACTER varying(288), cfp DECIMAL)" 
             for p in peers ]) 
         
 
             sql_2 = f"""
                 -- cfp算出
                 INSERT INTO calc_cfp (partid, cfp, hash_cfp) 
-                WITH co2vals AS (
+                WITH cfpvals AS (
                     {co2_import}
-                ),
-                cfpvals AS(               
-                    WITH RECURSIVE calc_qty(partid, root, quantity) AS (
-                        SELECT DISTINCT
-                            tt.partid,
-                            tt.partid AS root,
-                            1:: NUMERIC(100,0) AS quantity
-                        FROM target_tree tt
-
-                        UNION ALL
-
-                        SELECT
-                            tt.partid,          -- 子部品
-                            cq.root,           -- スタート部品は固定
-                            (cq.quantity * tt.qty):: NUMERIC(100,0) -- 親の個数 * 使用数（qty）
-                        FROM calc_qty cq
-                        JOIN target_tree tt ON tt.parents_partid = cq.partid
-                    )
-                    SELECT
-                        cq.root AS partid,
-                        ROUND(SUM(c.co2 * cq.quantity), 4) AS cfp
-                    FROM calc_qty cq
-                    JOIN co2vals c ON cq.partid = c.partid
-                    GROUP BY cq.root
-                    ORDER BY cq.root
                 )
-                SELECT partid, cfp, digest(cfp::text, 'sha256') AS hash_cfp
-                FROM cfpvals;
+                SELECT DISTINCT cv.partid, cfp, digest(cfp::text, 'sha256') AS hash_cfp
+                FROM cfpvals cv, target_tree tt
+                WHERE cv.partid = tt.partid;
 
             """
             cur.execute(sql_2)
@@ -144,7 +143,7 @@ def hash_part_tree(peer, peers, root_partid):
                     WHERE calc_cfp.partid = tt.partid AND tt.partid = cd.partid;
             """
             cur.execute(sql_3)
-            
+
             while True: 
 
                 # 終了条件
@@ -187,100 +186,133 @@ def hash_part_tree(peer, peers, root_partid):
                     WHERE h.partid = hashvals.partid AND can_hashing = False;
                 """ 
                 cur.execute(sql_4)
-                
-            cur.execute( """
-                SELECT DISTINCT calc_cfp.partid, assembler, cfp, encode(hash, 'hex') AS hashval 
-                FROM calc_cfp, hashvals, partinfo pi 
-                WHERE calc_cfp.partid = hashvals.partid AND calc_cfp.partid = pi.partid;
-                """)
-            data = cur.fetchall()
+
+            # 検証
+
+            sql_5 = f"""
+                SELECT hpt.hash = encode(hashvals.hash, 'hex') AS result
+                    FROM hashvals, hash_parts_tree hpt
+                    WHERE hashvals.partid = hpt.partid AND hpt.partid = %s;
+            """
+            cur.execute(sql_5, (root_partid, ))
+            row = cur.fetchone()
+            
+
+            if row[0] == True : return True # 出力がない = 検証成功
+
+            ## 特定処理続行
+
+            cur.execute("""
+                SELECT DISTINCT
+                        h.parents_partid AS partid,
+                        h.partid AS child_partid, 
+                        h.duplication,
+                        hv.hash AS parent_base,
+                        h.hash AS child_hash,
+                        decode(hpt2.hash,'hex') AS correct_parent_hash,
+                        decode(hpt.hash,'hex') AS correct_child_hash
+                    FROM hashvals h
+                    JOIN hash_parts_tree hpt ON h.partid = hpt.partid
+                    LEFT JOIN hashvals hv ON h.parents_partid = hv.partid
+                    LEFT JOIN hash_parts_tree hpt2 ON h.parents_partid = hpt2.partid
+                    WHERE hpt.hash <> encode(h.hash, 'hex');
+            """)
+            
+            edges = cur.fetchall()
+
+            # 2) データ構造に整形
+            children_map = defaultdict(list)
+            parent_base_map = dict()
+            correct_parent_map = dict()
+            dup_map = dict()
+            child_hash_map = dict()
+            correct_child_map = dict()
+
+            for e in edges:
+                parent = e[0]
+                child  = e[1]
+                dup_map[(parent, child)] = e[2]
+                children_map[parent].append(child)
+                parent_base_map[parent] = e[3]
+                child_hash_map[(parent, child)] = e[4]
+                correct_parent_map[parent] = e[5]
+                correct_child_map[(parent, child)] = e[6]
+
+
+            # 3) 葉→親→祖先の順で復元
+            restored_hash_map = dict()
+            tampered_flags = dict()
+            processed = set()
+
+            # 葉を含む全ノード
+            all_parents = set(parent_base_map.keys())
+            all_children = set(child_hash_map.keys())
+            leaf_candidates = all_children - all_parents
+
+            # キューで階層ごとに処理
+            queue = deque(all_parents)  # 全親を順次処理
+
+            while queue:
+                parent = queue.popleft()
+                if parent in processed:
+                    continue
+                childs = children_map.get(parent, [])
+                # 子の復元値がまだ計算されていない場合は後回し
+                if any(c in children_map and c not in processed for c in childs):
+                    queue.append(parent)
+                    continue
+                delta_list = []
+                for child in childs:
+                    ch_hash = child_hash_map[(parent, child)]
+                    correct_ch = correct_child_map[(parent, child)]
+                    if ch_hash != correct_ch:
+                        delta_list.append(xor_bytes(ch_hash, correct_ch))
+                        tampered_flags[(parent, child)] = True
+                    else:
+                        delta_list.append(bytes(32))
+                        tampered_flags[(parent, child)] = False
+                parent_base = parent_base_map[parent]
+                parent_restored = xor_sha256_list([parent_base] + delta_list)
+                restored_hash_map[parent] = parent_restored
+                processed.add(parent)
+                # この親の上位ノードがあればキューに追加
+                for p, children in children_map.items():
+                    if parent in children and p not in processed:
+                        queue.append(p)
+
+            # 4) 結果出力
+            for parent, childs in children_map.items():
+                for child in childs:
+                    print(f"Parent: {parent}, Child: {child}, "
+                        f"Restored: {restored_hash_map[parent].hex()}, "
+                        f"Correct: {correct_parent_map[parent].hex()}, "
+                        f"Tampered: {tampered_flags[(parent, child)]}")
 
     finally:
         if conn:
             conn.close()
     
-    return data
-
-
-def make_merkltree(assembler, root_partid):
-
-    peers = ["postgresA", "postgresB", "postgresC"]
-
-    start = time.time()
-    ## postgres処理
-    result = hash_part_tree(assembler, peers, root_partid)
-
-    #print("ツリー構築",time.time()-start)
-    start = time.time()
-    
-    # polarsに変換
-    part_list = []
-    hash_list = []
-
-    # assemblerごとの2次元リスト (insert_val)
-    insert_val_dict = defaultdict(list)
-
-    for partid, assembler, cfp, hashval in result:
-        part_list.append(partid)
-        hash_list.append(hashval)
-        insert_val_dict[assembler].append((partid, cfp))
-
-    # assemblerの辞書のkey
-    assembler_unique = list(insert_val_dict.keys())
-
-    #print("データの抽出",time.time()-start)
-    start = time.time()
-
-    # Irohaコマンドで書き込み
-    SQLexe.IROHA_CMDexe(assembler, part_list, hash_list)
-
-    #print("iroha実行",time.time()-start)
-    start = time.time()
-
-    # offchain-dbへの書き込み
-    for key in assembler_unique:
-
-        upsert_sql = """
-            UPDATE cfpval AS t
-            SET
-                partid = v.partid,
-                cfp = v.cfp
-            FROM (VALUES %s)
-            AS v(partid, cfp)
-            WHERE v.partid = t.partid;
-        """
-
-        # DB接続
-        conn = connect(
-            dbname = "offchaindb", 
-            user = "postgres", 
-            password = "mysecretpassword",
-            host = key,
-            port = 5432
-        )
-
-        with conn.cursor() as cur:
-            execute_values(cur, upsert_sql, insert_val_dict[key])
-
-        conn.commit()
-        conn.close()
-
-    #print("offchainへwrite",time.time()-start)
-
+    return kaizan_kamo
 
 # ======== MAIN ======== #
 
 if __name__ == '__main__':
 
     root_partid = 'P0'
+    peers = ["postgresA", "postgresB", "postgresC"]
+
     assembler = w.get_Assebler(root_partid)
 
     start = time.time()
 
-    peers = ["postgresA", "postgresB", "postgresC"]
-    #result = hash_part_tree(assembler, peers, root_partid)
-    #print(result)
-    make_merkltree(assembler, root_partid)
+    result = valification(assembler, peers, root_partid)
+
+    if result == True:
+        print("varification successfully")
+    else:
+        #print(result)
+        print("varification faild")
     
     t = time.time() - start
     print("time:", t)
+
